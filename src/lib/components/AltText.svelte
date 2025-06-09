@@ -73,6 +73,14 @@
 	// Check if we can submit
 	const canSubmit = $derived((mode === 'image' && imageData) || (mode === 'url' && isValidUrl));
 
+	// Determine button text based on state
+	const buttonText = $derived(() => {
+		if (!generatedAltText) {
+			return 'Generate Alt Text';
+		}
+		return 'Regenerate Alt Text';
+	});
+
 	// Handle submit
 	function handleSubmit() {
 		// Clear previous error
@@ -91,15 +99,31 @@
 		// TODO: Implement LLM API call
 		const payload =
 			mode === 'image'
-				? { type: 'image', data: imageData, context: contextText }
-				: { type: 'url', data: sanitizedUrl, context: contextText };
+				? { 
+					type: 'image', 
+					data: imageData, 
+					context: contextText,
+					previousAltText: generatedAltText || null
+				}
+				: { 
+					type: 'url', 
+					data: sanitizedUrl, 
+					context: contextText,
+					previousAltText: generatedAltText || null
+				};
 
 		console.log('Submitting:', payload);
 
 		// Show dummy alt text immediately
-		generatedAltText = "A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.";
+		const isRegeneration = !!generatedAltText;
+		generatedAltText = isRegeneration 
+			? "An updated colorful bar chart displaying quarterly sales figures with a clear upward trajectory from Q1 to Q4, demonstrating consistent business growth and improved performance throughout the fiscal year."
+			: "A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.";
+		
 		isEditing = false;
-		announceMessage = 'Alt text has been generated successfully';
+		announceMessage = isRegeneration 
+			? 'Alt text has been regenerated successfully' 
+			: 'Alt text has been generated successfully';
 	}
 
 	// Handle keyboard events for file upload area
@@ -308,7 +332,7 @@
 				: 'cursor-pointer opacity-50'}"
 			aria-describedby={submitError ? 'submit-error' : undefined}
 		>
-			Generate Alt Text
+			{buttonText}
 		</button>
 		{#if submitError}
 			<p class="mt-2 text-sm text-red-500" id="submit-error" role="alert">
