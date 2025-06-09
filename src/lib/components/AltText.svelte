@@ -5,6 +5,7 @@
   let isDragOver = $state(false);
   let contextExpanded = $state(false);
   let contextText = $state('');
+  let wcagExpanded = $state(false);
 
   // Handle file upload
   function handleFileSelect(event) {
@@ -193,5 +194,62 @@
     >
       Generate Alt Text
     </button>
+  </div>
+
+  <!-- WCAG Criteria Section -->
+  <div class="mt-6 border border-gray-200 rounded-lg">
+    <button 
+      onclick={() => wcagExpanded = !wcagExpanded}
+      class="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+    >
+      <span class="font-medium text-gray-700">WCAG Alt Text Guidelines</span>
+      <svg 
+        class="w-5 h-5 text-gray-500 transition-transform duration-200 {wcagExpanded ? 'rotate-180' : ''}"
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    
+    {#if wcagExpanded}
+      <div class="px-4 pb-4 border-t border-gray-200">
+        <div class="mt-3 space-y-4 text-sm">
+          <div>
+            <h4 class="font-semibold text-gray-800 mb-2">Key WCAG 2.1 Criteria for Alt Text:</h4>
+            
+            <div class="space-y-3">
+              <div>
+                <strong class="text-gray-700">1.1.1 Non-text Content (Level A)</strong>
+                <p class="text-gray-600 mt-1">All non-text content must have a text alternative that serves the equivalent purpose.</p>
+              </div>
+              
+              <div>
+                <strong class="text-gray-700">Best Practices:</strong>
+                <ul class="list-disc list-inside text-gray-600 mt-1 space-y-1">
+                  <li><strong>Be concise:</strong> Usually under 125 characters</li>
+                  <li><strong>Be descriptive:</strong> Convey the essential information</li>
+                  <li><strong>Avoid redundancy:</strong> Don't start with "Image of..." or "Picture of..."</li>
+                  <li><strong>Context matters:</strong> Consider the image's purpose in the content</li>
+                  <li><strong>Decorative images:</strong> Use empty alt="" for purely decorative images</li>
+                  <li><strong>Complex images:</strong> Provide detailed description elsewhere and reference it</li>
+                </ul>
+              </div>
+              
+              <div>
+                <strong class="text-gray-700">Types of Images:</strong>
+                <ul class="list-disc list-inside text-gray-600 mt-1 space-y-1">
+                  <li><strong>Informative:</strong> Describe the essential information</li>
+                  <li><strong>Functional:</strong> Describe the action or destination</li>
+                  <li><strong>Decorative:</strong> Use empty alt attribute (alt="")</li>
+                  <li><strong>Complex:</strong> Provide summary in alt, full description nearby</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    {/if}
   </div>
 </div>
