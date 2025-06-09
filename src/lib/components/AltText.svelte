@@ -77,11 +77,9 @@
 
 		console.log('Submitting:', payload);
 
-		// Mock response for demo
-		setTimeout(() => {
-			generatedAltText = "A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.";
-			isEditing = false;
-		}, 1000);
+		// Show dummy alt text immediately
+		generatedAltText = "A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.";
+		isEditing = false;
 	}
 
 	// Handle textarea auto-resize
