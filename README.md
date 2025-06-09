@@ -9,7 +9,6 @@ A WCAG-compliant alt text generator powered by AI. Upload images or provide URLs
 - 🤖 **AI-Powered**: Uses Anthropic's Claude 3.5 Sonnet for intelligent image analysis
 - ♿ **WCAG Compliant**: Follows Web Content Accessibility Guidelines 2.1
 - 📝 **Context Aware**: Add additional context to improve alt text quality
-- 📊 **Quality Analysis**: Real-time feedback on alt text quality and suggestions
 - 📚 **History**: Saves generation history with thumbnails for easy reference
 - ✏️ **Editable**: Click to edit generated alt text inline
 - 📋 **Copy to Clipboard**: One-click copying for easy use
@@ -44,15 +43,12 @@ cd alt-text-generator
 pnpm install
 ```
 
-3. Set up environment variables:
+3. Create environment variables file:
 ```bash
-cp .env.example .env
+echo "ANTHROPIC_API_KEY=your_anthropic_api_key_here" > .env
 ```
 
-4. Add your Anthropic API key to `.env`:
-```bash
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-```
+Replace `your_anthropic_api_key_here` with your actual Anthropic API key.
 
 ### Development
 
