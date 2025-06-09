@@ -14,6 +14,9 @@
 	let announceMessage = $state('');
 	let submitError = $state('');
 	let isLoading = $state(false);
+	let historyExpanded = $state(false);
+	let showComparison = $state(false);
+	let comparisonText = $state('');
 
 	// Handle file upload
 	function handleFileSelect(event) {
@@ -75,6 +78,63 @@
 
 	// Check if we can submit
 	const canSubmit = $derived((mode === 'image' && imageData) || (mode === 'url' && isValidUrl));
+
+	// History management
+	const historyKey = 'altTextHistory';
+	const maxHistoryItems = 20;
+
+	function saveToHistory(altText, inputData) {
+		if (typeof window === 'undefined') return;
+		
+		const historyItem = {
+			id: Date.now(),
+			altText: altText.trim(),
+			timestamp: new Date().toISOString(),
+			inputType: mode,
+			context: contextText,
+			...inputData
+		};
+
+		const existingHistory = getHistory();
+		const newHistory = [historyItem, ...existingHistory.slice(0, maxHistoryItems - 1)];
+		
+		localStorage.setItem(historyKey, JSON.stringify(newHistory));
+	}
+
+	function getHistory() {
+		if (typeof window === 'undefined') return [];
+		
+		try {
+			const stored = localStorage.getItem(historyKey);
+			return stored ? JSON.parse(stored) : [];
+		} catch {
+			return [];
+		}
+	}
+
+	function clearHistory() {
+		if (typeof window === 'undefined') return;
+		
+		localStorage.removeItem(historyKey);
+		announceMessage = 'History cleared';
+	}
+
+	function loadFromHistory(item) {
+		generatedAltText = item.altText;
+		isEditing = false;
+		announceMessage = `Loaded alt text from ${new Date(item.timestamp).toLocaleDateString()}`;
+	}
+
+	function compareWithCurrent(historyText) {
+		comparisonText = historyText;
+		showComparison = true;
+	}
+
+	// Get history for display
+	const history = $derived(() => {
+		if (typeof window === 'undefined') return [];
+		return getHistory();
+	});
 
 	// Alt text quality analysis
 	const altTextAnalysis = $derived(() => {
@@ -207,9 +267,18 @@
 
 			// Show dummy alt text
 			const isRegeneration = !!generatedAltText;
-			generatedAltText = isRegeneration
+			const newAltText = isRegeneration
 				? 'An updated colorful bar chart displaying quarterly sales figures with a clear upward trajectory from Q1 to Q4, demonstrating consistent business growth and improved performance throughout the fiscal year.'
 				: 'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.';
+
+			generatedAltText = newAltText;
+
+			// Save to history
+			const inputData = mode === 'image' 
+				? { hasImage: true, imageSize: imageData ? 'uploaded' : null }
+				: { url: sanitizedUrl };
+			
+			saveToHistory(newAltText, inputData);
 
 			isEditing = false;
 			announceMessage = isRegeneration
@@ -471,6 +540,149 @@
 			<p class="mt-2 text-sm text-gray-600" aria-live="polite">Processing your request...</p>
 		{/if}
 	</div>
+
+	<!-- History Section -->
+	<div class="mt-6 rounded-lg border border-gray-200">
+		<button
+			onclick={() => (historyExpanded = !historyExpanded)}
+			class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset"
+			aria-expanded={historyExpanded}
+			aria-controls="history-content"
+			id="history-toggle"
+		>
+			<span class="font-medium text-gray-700">History ({history.length})</span>
+			<svg
+				class="h-5 w-5 text-gray-500 transition-transform duration-200 {historyExpanded
+					? 'rotate-180'
+					: ''}"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+				aria-hidden="true"
+			>
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+			</svg>
+		</button>
+
+		{#if historyExpanded}
+			<div
+				class="border-t border-gray-200 px-4 pb-4"
+				id="history-content"
+				aria-labelledby="history-toggle"
+			>
+				{#if history.length > 0}
+					<div class="mt-3 space-y-2">
+						<div class="flex justify-between items-center mb-3">
+							<span class="text-sm text-gray-600">Recent generations</span>
+							<button
+								onclick={clearHistory}
+								class="text-xs text-red-600 hover:text-red-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+								aria-label="Clear all history"
+							>
+								Clear all
+							</button>
+						</div>
+						{#each history as item (item.id)}
+							<div class="rounded-md border border-gray-200 bg-white p-3">
+								<div class="flex items-start justify-between gap-2">
+									<div class="flex-1 min-w-0">
+										<p class="text-sm text-gray-800 line-clamp-2">{item.altText}</p>
+										<div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
+											<span>{new Date(item.timestamp).toLocaleDateString()}</span>
+											<span>•</span>
+											<span class="capitalize">{item.inputType}</span>
+											{#if item.context}
+												<span>•</span>
+												<span>With context</span>
+											{/if}
+										</div>
+									</div>
+									<div class="flex gap-1">
+										<button
+											onclick={() => loadFromHistory(item)}
+											class="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+											aria-label="Load this alt text"
+										>
+											Load
+										</button>
+										<button
+											onclick={() => compareWithCurrent(item.altText)}
+											class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+											aria-label="Compare with current"
+										>
+											Compare
+										</button>
+									</div>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					<p class="mt-3 text-sm text-gray-500">No previous generations yet.</p>
+				{/if}
+			</div>
+		{/if}
+	</div>
+
+	<!-- Comparison Modal -->
+	{#if showComparison}
+		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+			<div class="bg-white rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
+				<div class="flex items-center justify-between p-4 border-b border-gray-200">
+					<h3 class="text-lg font-medium text-gray-900">Compare Alt Text</h3>
+					<button
+						onclick={() => (showComparison = false)}
+						class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+						aria-label="Close comparison"
+					>
+						<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+						</svg>
+					</button>
+				</div>
+				<div class="p-4 overflow-y-auto">
+					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+						<div>
+							<h4 class="font-medium text-gray-900 mb-2">Current Alt Text</h4>
+							<div class="p-3 bg-blue-50 border border-blue-200 rounded-md">
+								<p class="text-sm text-gray-800">{generatedAltText}</p>
+								<div class="mt-2 text-xs text-gray-600">
+									Characters: {generatedAltText.length}
+								</div>
+							</div>
+						</div>
+						<div>
+							<h4 class="font-medium text-gray-900 mb-2">Previous Version</h4>
+							<div class="p-3 bg-gray-50 border border-gray-200 rounded-md">
+								<p class="text-sm text-gray-800">{comparisonText}</p>
+								<div class="mt-2 text-xs text-gray-600">
+									Characters: {comparisonText.length}
+								</div>
+							</div>
+						</div>
+					</div>
+					<div class="mt-4 flex justify-end gap-2">
+						<button
+							onclick={() => (showComparison = false)}
+							class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+						>
+							Close
+						</button>
+						<button
+							onclick={() => {
+								generatedAltText = comparisonText;
+								showComparison = false;
+								announceMessage = 'Switched to previous version';
+							}}
+							class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+						>
+							Use Previous Version
+						</button>
+					</div>
+				</div>
+			</div>
+		</div>
+	{/if}
 
 	<!-- Generated Alt Text Display -->
 	{#if generatedAltText}
@@ -757,5 +969,12 @@
 		clip: rect(0, 0, 0, 0);
 		white-space: nowrap;
 		border: 0;
+	}
+
+	.line-clamp-2 {
+		display: -webkit-box;
+		-webkit-line-clamp: 2;
+		-webkit-box-orient: vertical;
+		overflow: hidden;
 	}
 </style>
