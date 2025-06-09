@@ -74,6 +74,68 @@
 	// Check if we can submit
 	const canSubmit = $derived((mode === 'image' && imageData) || (mode === 'url' && isValidUrl));
 
+	// Alt text quality analysis
+	const altTextAnalysis = $derived(() => {
+		if (!generatedAltText) return null;
+
+		const text = generatedAltText.trim();
+		const charCount = text.length;
+		const issues = [];
+		let score = 100;
+
+		// Check character count
+		if (charCount > 125) {
+			issues.push(`Too long (${charCount} characters). WCAG recommends under 125 characters.`);
+			score -= 20;
+		} else if (charCount < 10) {
+			issues.push('Very short. Consider adding more descriptive details.');
+			score -= 15;
+		}
+
+		// Check for redundant phrases
+		const redundantPhrases = ['image of', 'picture of', 'photo of', 'graphic of', 'illustration of'];
+		const lowerText = text.toLowerCase();
+		for (const phrase of redundantPhrases) {
+			if (lowerText.startsWith(phrase)) {
+				issues.push(`Avoid starting with "${phrase}". Start with the actual description.`);
+				score -= 15;
+				break;
+			}
+		}
+
+		// Check for vague descriptions
+		const vagueWords = ['something', 'things', 'stuff', 'various', 'some'];
+		for (const word of vagueWords) {
+			if (lowerText.includes(word)) {
+				issues.push('Consider being more specific instead of using vague terms.');
+				score -= 10;
+				break;
+			}
+		}
+
+		// Check if it's just a filename or URL
+		if (text.includes('.jpg') || text.includes('.png') || text.includes('.gif') || text.includes('http')) {
+			issues.push('Appears to contain filename or URL. Describe the image content instead.');
+			score -= 25;
+		}
+
+		// Positive feedback for good practices
+		if (charCount >= 20 && charCount <= 100) {
+			score += 5; // Bonus for good length
+		}
+
+		// Ensure score doesn't go below 0
+		score = Math.max(0, score);
+
+		return {
+			charCount,
+			isOptimalLength: charCount >= 20 && charCount <= 125,
+			issues,
+			score,
+			quality: score >= 80 ? 'excellent' : score >= 60 ? 'good' : score >= 40 ? 'fair' : 'needs improvement'
+		};
+	});
+
 	// Determine button text based on state
 	const buttonText = $derived(() => {
 		if (isLoading) {
@@ -462,6 +524,71 @@
 					</div>
 				{/if}
 			</div>
+
+			<!-- Quality Feedback -->
+			{#if altTextAnalysis}
+				<div class="mt-3 space-y-2">
+					<!-- Character Count and Quality Score -->
+					<div class="flex items-center justify-between text-sm">
+						<div class="flex items-center gap-2">
+							<span class="text-gray-600">
+								Characters: 
+								<span class="{altTextAnalysis.charCount > 125 ? 'text-red-600 font-medium' : altTextAnalysis.isOptimalLength ? 'text-green-600' : 'text-gray-800'}">
+									{altTextAnalysis.charCount}
+								</span>
+								<span class="text-gray-400">/ 125</span>
+							</span>
+							{#if altTextAnalysis.charCount > 125}
+								<span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded">Too long</span>
+							{:else if altTextAnalysis.isOptimalLength}
+								<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded">Good length</span>
+							{/if}
+						</div>
+						
+						<div class="flex items-center gap-2">
+							<span class="text-gray-600">Quality:</span>
+							<div class="flex items-center gap-1">
+								<div class="w-16 h-2 bg-gray-200 rounded-full overflow-hidden">
+									<div 
+										class="h-full transition-all duration-300 {altTextAnalysis.quality === 'excellent' ? 'bg-green-500' : altTextAnalysis.quality === 'good' ? 'bg-blue-500' : altTextAnalysis.quality === 'fair' ? 'bg-yellow-500' : 'bg-red-500'}"
+										style="width: {altTextAnalysis.score}%"
+									></div>
+								</div>
+								<span class="text-xs font-medium {altTextAnalysis.quality === 'excellent' ? 'text-green-600' : altTextAnalysis.quality === 'good' ? 'text-blue-600' : altTextAnalysis.quality === 'fair' ? 'text-yellow-600' : 'text-red-600'}">
+									{altTextAnalysis.score}%
+								</span>
+							</div>
+						</div>
+					</div>
+
+					<!-- Issues and Suggestions -->
+					{#if altTextAnalysis.issues.length > 0}
+						<div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+							<h4 class="text-sm font-medium text-yellow-800 mb-2">Suggestions for improvement:</h4>
+							<ul class="text-sm text-yellow-700 space-y-1">
+								{#each altTextAnalysis.issues as issue}
+									<li class="flex items-start gap-2">
+										<svg class="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+											<path fill-rule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+										</svg>
+										{issue}
+									</li>
+								{/each}
+							</ul>
+						</div>
+					{:else if altTextAnalysis.quality === 'excellent'}
+						<div class="bg-green-50 border border-green-200 rounded-md p-3">
+							<div class="flex items-center gap-2">
+								<svg class="w-4 h-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
+									<path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+								</svg>
+								<span class="text-sm font-medium text-green-800">Excellent alt text!</span>
+							</div>
+							<p class="text-sm text-green-700 mt-1">This alt text follows WCAG guidelines and best practices.</p>
+						</div>
+					{/if}
+				</div>
+			{/if}
 
 			{#if isEditing}
 				<div class="mt-2 flex justify-end gap-2">
