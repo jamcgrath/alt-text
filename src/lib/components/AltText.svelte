@@ -1,22 +1,66 @@
 <script>
-	let mode = $state('image'); // 'image' or 'url'
+	/**
+	 * @fileoverview Alt Text Generator Component
+	 * A comprehensive tool for generating WCAG-compliant alt text using AI
+	 * Supports image uploads, URLs, context, and maintains generation history
+	 */
+
+	// ===== STATE VARIABLES =====
+	
+	/** @type {'image'|'url'} Current input mode */
+	let mode = $state('image');
+	
+	/** @type {string|null} Base64 encoded image data */
 	let imageData = $state(null);
+	
+	/** @type {string} URL input value */
 	let urlInput = $state('');
+	
+	/** @type {boolean} Drag and drop state */
 	let isDragOver = $state(false);
+	
+	/** @type {boolean} Context section expanded state */
 	let contextExpanded = $state(false);
+	
+	/** @type {string} Additional context for alt text generation */
 	let contextText = $state('');
+	
+	/** @type {boolean} WCAG guidelines section expanded state */
 	let wcagExpanded = $state(false);
+	
+	/** @type {string} Generated alt text content */
 	let generatedAltText = $state('');
+	
+	/** @type {boolean} Alt text editing mode */
 	let isEditing = $state(false);
+	
+	/** @type {boolean} Copy to clipboard success state */
 	let copySuccess = $state(false);
+	
+	/** @type {string} Screen reader announcement message */
 	let announceMessage = $state('');
+	
+	/** @type {string} Form submission error message */
 	let submitError = $state('');
+	
+	/** @type {boolean} API request loading state */
 	let isLoading = $state(false);
+	
+	/** @type {boolean} History section expanded state */
 	let historyExpanded = $state(true);
+	
+	/** @type {boolean} Comparison modal visibility */
 	let showComparison = $state(false);
+	
+	/** @type {string} Alt text for comparison */
 	let comparisonText = $state('');
 
-	// Handle file upload
+	// ===== FILE HANDLING =====
+
+	/**
+	 * Handle file selection from input
+	 * @param {Event} event - File input change event
+	 */
 	function handleFileSelect(event) {
 		const file = event.target.files[0];
 		if (file && file.type.startsWith('image/')) {
@@ -28,7 +72,10 @@
 		}
 	}
 
-	// Handle drag and drop
+	/**
+	 * Handle drag and drop file upload
+	 * @param {DragEvent} event - Drop event
+	 */
 	function handleDrop(event) {
 		event.preventDefault();
 		isDragOver = false;
@@ -43,16 +90,26 @@
 		}
 	}
 
+	/**
+	 * Handle drag over event for visual feedback
+	 * @param {DragEvent} event - Drag over event
+	 */
 	function handleDragOver(event) {
 		event.preventDefault();
 		isDragOver = true;
 	}
 
+	/**
+	 * Handle drag leave event
+	 */
 	function handleDragLeave() {
 		isDragOver = false;
 	}
 
-	// Convert file to base64
+	/**
+	 * Convert file to base64 data URL
+	 * @param {File} file - Image file to convert
+	 */
 	function convertToBase64(file) {
 		const reader = new FileReader();
 		reader.onload = (e) => {
@@ -61,7 +118,13 @@
 		reader.readAsDataURL(file);
 	}
 
-	// Sanitize URL input
+	// ===== URL HANDLING =====
+
+	/**
+	 * Sanitize and validate URL input
+	 * @param {string} url - Raw URL input
+	 * @returns {string} Sanitized URL or empty string if invalid
+	 */
 	function sanitizeUrl(url) {
 		try {
 			const sanitized = new URL(url.trim());
@@ -205,12 +268,14 @@
 		isLoading ? 'Generating...' : !generatedAltText ? 'Generate Alt Text' : 'Regenerate Alt Text'
 	);
 
-	// Handle submit
+	// ===== EVENT HANDLERS =====
+
+	/**
+	 * Handle form submission for alt text generation
+	 */
 	async function handleSubmit() {
-		// Prevent multiple submissions
 		if (isLoading) return;
 
-		// Clear previous error
 		submitError = '';
 
 		if (!canSubmit) {
@@ -223,26 +288,25 @@
 			return;
 		}
 
-		// Start loading state
 		isLoading = true;
 		announceMessage = 'Generating alt text...';
 
 		try {
-			const payload =
-				mode === 'image'
-					? {
-							type: 'image',
-							data: imageData,
-							context: contextText,
-							previousAltText: generatedAltText || null
-						}
-					: {
-							type: 'url',
-							data: sanitizedUrl,
-							context: contextText,
-							previousAltText: generatedAltText || null
-						};
-			console.log('Submitting payload:', payload);
+			/** @type {Object} API request payload */
+			const payload = mode === 'image'
+				? {
+					type: 'image',
+					data: imageData,
+					context: contextText,
+					previousAltText: generatedAltText || null
+				}
+				: {
+					type: 'url',
+					data: sanitizedUrl,
+					context: contextText,
+					previousAltText: generatedAltText || null
+				};
+
 			const response = await fetch('/api/generate-alt-text', {
 				method: 'POST',
 				headers: {
@@ -260,11 +324,10 @@
 			const isRegeneration = !!generatedAltText;
 			generatedAltText = result.altText;
 
-			// Save to history
-			const inputData =
-				mode === 'image'
-					? { hasImage: true, imageSize: imageData ? 'uploaded' : null, imageData: imageData }
-					: { url: sanitizedUrl };
+			// Save to history with appropriate input data
+			const inputData = mode === 'image'
+				? { hasImage: true, imageSize: imageData ? 'uploaded' : null, imageData: imageData }
+				: { url: sanitizedUrl };
 
 			saveToHistory(result.altText, inputData);
 
@@ -272,6 +335,7 @@
 			announceMessage = isRegeneration
 				? 'Alt text has been regenerated successfully'
 				: 'Alt text has been generated successfully';
+
 		} catch (error) {
 			console.error('Error generating alt text:', error);
 			submitError = error.message || 'Failed to generate alt text. Please try again.';
@@ -281,7 +345,10 @@
 		}
 	}
 
-	// Handle keyboard events for file upload area
+	/**
+	 * Handle keyboard events for file upload area accessibility
+	 * @param {KeyboardEvent} event - Keyboard event
+	 */
 	function handleUploadKeydown(event) {
 		if (event.key === 'Enter' || event.key === ' ') {
 			event.preventDefault();
@@ -289,7 +356,9 @@
 		}
 	}
 
-	// Handle click to edit
+	/**
+	 * Handle click to edit generated alt text
+	 */
 	function handleTextareaClick() {
 		if (!isEditing) {
 			isEditing = true;
@@ -297,7 +366,9 @@
 		}
 	}
 
-	// Handle copy to clipboard
+	/**
+	 * Copy generated alt text to clipboard
+	 */
 	async function copyToClipboard() {
 		try {
 			await navigator.clipboard.writeText(generatedAltText);
