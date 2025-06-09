@@ -263,7 +263,7 @@
 			// Save to history
 			const inputData =
 				mode === 'image'
-					? { hasImage: true, imageSize: imageData ? 'uploaded' : null }
+					? { hasImage: true, imageSize: imageData ? 'uploaded' : null, imageData: imageData }
 					: { url: sanitizedUrl };
 
 			saveToHistory(result.altText, inputData);
@@ -817,7 +817,39 @@
 						</div>
 						{#each history as item (item.id)}
 							<div class="rounded-md border border-gray-200 bg-white p-3">
-								<div class="flex items-start justify-between gap-2">
+								<div class="flex items-start gap-3">
+									<!-- Thumbnail -->
+									{#if item.inputType === 'image' && item.imageData}
+										<div class="flex-shrink-0">
+											<img
+												src={item.imageData}
+												alt="Thumbnail"
+												class="h-12 w-12 rounded-md border border-gray-200 object-cover"
+											/>
+										</div>
+									{:else if item.inputType === 'url' && item.url}
+										<div class="flex-shrink-0">
+											<img
+												src={item.url}
+												alt="Thumbnail"
+												class="h-12 w-12 rounded-md border border-gray-200 object-cover"
+												onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+											/>
+											<div class="hidden h-12 w-12 items-center justify-center rounded-md border border-gray-200 bg-gray-100">
+												<svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m0 0l4-4a4 4 0 105.656-5.656l-4 4a4 4 0 01-5.656 0z" />
+												</svg>
+											</div>
+										</div>
+									{:else}
+										<div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-100">
+											<svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+											</svg>
+										</div>
+									{/if}
+
+									<!-- Content -->
 									<div class="min-w-0 flex-1">
 										<p class="line-clamp-2 text-sm text-gray-800">{item.altText}</p>
 										<div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
@@ -830,7 +862,9 @@
 											{/if}
 										</div>
 									</div>
-									<div class="flex gap-1">
+
+									<!-- Actions -->
+									<div class="flex flex-shrink-0 gap-1">
 										<button
 											onclick={() => loadFromHistory(item)}
 											class="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 transition-colors hover:bg-blue-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
