@@ -11,6 +11,7 @@
 	let copySuccess = $state(false);
 	let announceMessage = $state('');
 	let submitError = $state('');
+	let isLoading = $state(false);
 
 	// Handle file upload
 	function handleFileSelect(event) {
@@ -74,10 +75,18 @@
 	const canSubmit = $derived((mode === 'image' && imageData) || (mode === 'url' && isValidUrl));
 
 	// Determine button text based on state
-	const buttonText = $derived(!generatedAltText ? 'Generate Alt Text' : 'Regenerate Alt Text');
+	const buttonText = $derived(() => {
+		if (isLoading) {
+			return 'Generating...';
+		}
+		return !generatedAltText ? 'Generate Alt Text' : 'Regenerate Alt Text';
+	});
 
 	// Handle submit
-	function handleSubmit() {
+	async function handleSubmit() {
+		// Prevent multiple submissions
+		if (isLoading) return;
+
 		// Clear previous error
 		submitError = '';
 
@@ -91,34 +100,49 @@
 			return;
 		}
 
-		// TODO: Implement LLM API call
-		const payload =
-			mode === 'image'
-				? {
-						type: 'image',
-						data: imageData,
-						context: contextText,
-						previousAltText: generatedAltText || null
-					}
-				: {
-						type: 'url',
-						data: sanitizedUrl,
-						context: contextText,
-						previousAltText: generatedAltText || null
-					};
+		// Start loading state
+		isLoading = true;
+		announceMessage = 'Generating alt text...';
 
-		console.log('Submitting:', payload);
+		try {
+			// TODO: Implement LLM API call
+			const payload =
+				mode === 'image'
+					? {
+							type: 'image',
+							data: imageData,
+							context: contextText,
+							previousAltText: generatedAltText || null
+						}
+					: {
+							type: 'url',
+							data: sanitizedUrl,
+							context: contextText,
+							previousAltText: generatedAltText || null
+						};
 
-		// Show dummy alt text immediately
-		const isRegeneration = !!generatedAltText;
-		generatedAltText = isRegeneration
-			? 'An updated colorful bar chart displaying quarterly sales figures with a clear upward trajectory from Q1 to Q4, demonstrating consistent business growth and improved performance throughout the fiscal year.'
-			: 'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.';
+			console.log('Submitting:', payload);
 
-		isEditing = false;
-		announceMessage = isRegeneration
-			? 'Alt text has been regenerated successfully'
-			: 'Alt text has been generated successfully';
+			// Simulate API delay
+			await new Promise(resolve => setTimeout(resolve, 2000));
+
+			// Show dummy alt text
+			const isRegeneration = !!generatedAltText;
+			generatedAltText = isRegeneration
+				? 'An updated colorful bar chart displaying quarterly sales figures with a clear upward trajectory from Q1 to Q4, demonstrating consistent business growth and improved performance throughout the fiscal year.'
+				: 'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.';
+
+			isEditing = false;
+			announceMessage = isRegeneration
+				? 'Alt text has been regenerated successfully'
+				: 'Alt text has been generated successfully';
+		} catch (error) {
+			console.error('Error generating alt text:', error);
+			submitError = 'Failed to generate alt text. Please try again.';
+			announceMessage = 'Error generating alt text';
+		} finally {
+			isLoading = false;
+		}
 	}
 
 	// Handle keyboard events for file upload area
@@ -341,16 +365,28 @@
 	<div class="mt-6 text-center">
 		<button
 			onclick={handleSubmit}
-			class="rounded-lg bg-blue-600 px-8 py-3 font-medium text-white transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none {canSubmit
+			disabled={isLoading}
+			class="inline-flex items-center gap-2 rounded-lg bg-blue-600 px-8 py-3 font-medium text-white transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none {canSubmit && !isLoading
 				? 'cursor-pointer hover:bg-blue-700'
-				: 'cursor-pointer opacity-50'}"
+				: 'cursor-not-allowed opacity-50'}"
 			aria-describedby={submitError ? 'submit-error' : undefined}
 		>
+			{#if isLoading}
+				<svg class="h-4 w-4 animate-spin" fill="none" viewBox="0 0 24 24">
+					<circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+					<path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+				</svg>
+			{/if}
 			{buttonText}
 		</button>
 		{#if submitError}
 			<p class="mt-2 text-sm text-red-500" id="submit-error" role="alert">
 				{submitError}
+			</p>
+		{/if}
+		{#if isLoading}
+			<p class="mt-2 text-sm text-gray-600" aria-live="polite">
+				Processing your request...
 			</p>
 		{/if}
 	</div>
