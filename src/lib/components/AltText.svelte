@@ -55,6 +55,17 @@
   const sanitizedUrl = $derived(urlInput ? sanitizeUrl(urlInput) : '');
   const isValidUrl = $derived(urlInput && sanitizedUrl);
   const hasUrlError = $derived(urlInput && !sanitizedUrl);
+
+  // Check if we can submit
+  const canSubmit = $derived((mode === 'image' && imageData) || (mode === 'url' && isValidUrl));
+
+  // Handle submit
+  function handleSubmit() {
+    if (!canSubmit) return;
+    
+    // TODO: Implement LLM API call
+    console.log('Submitting:', mode === 'image' ? { type: 'image', data: imageData } : { type: 'url', data: sanitizedUrl });
+  }
 </script>
 
 <div class="max-w-2xl mx-auto p-5">
@@ -133,5 +144,16 @@
         {/if}
       </div>
     {/if}
+  </div>
+
+  <!-- Submit Button -->
+  <div class="mt-6 text-center">
+    <button 
+      onclick={handleSubmit}
+      disabled={!canSubmit}
+      class="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg transition-all duration-200 {canSubmit ? 'hover:bg-blue-700 cursor-pointer' : 'opacity-50 cursor-not-allowed'}"
+    >
+      Generate Alt Text
+    </button>
   </div>
 </div>
