@@ -130,10 +130,53 @@
 		showComparison = true;
 	}
 
-	// Get history for display
+	// Get history for display - mock data for now
 	const history = $derived(() => {
 		if (typeof window === 'undefined') return [];
-		return getHistory();
+		
+		// Mock history data
+		return [
+			{
+				id: 1703123456789,
+				altText: 'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.',
+				timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+				inputType: 'image',
+				context: 'Focus on the upward trend rather than specific numbers',
+				hasImage: true
+			},
+			{
+				id: 1703123456788,
+				altText: 'A professional headshot of a smiling woman in business attire against a neutral background.',
+				timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+				inputType: 'url',
+				context: '',
+				url: 'https://example.com/headshot.jpg'
+			},
+			{
+				id: 1703123456787,
+				altText: 'Screenshot of a mobile app interface showing a login form with username and password fields.',
+				timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+				inputType: 'image',
+				context: 'This screenshot shows the final result users should expect',
+				hasImage: true
+			},
+			{
+				id: 1703123456786,
+				altText: 'Infographic displaying climate change statistics with rising temperature graphs and melting ice imagery.',
+				timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
+				inputType: 'url',
+				context: '',
+				url: 'https://example.com/climate-infographic.png'
+			},
+			{
+				id: 1703123456785,
+				altText: 'A group photo of diverse team members celebrating in an office setting with confetti and balloons.',
+				timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
+				inputType: 'image',
+				context: 'Emphasize the celebratory and diverse nature of the team',
+				hasImage: true
+			}
+		];
 	});
 
 	// Alt text quality analysis
@@ -541,89 +584,6 @@
 		{/if}
 	</div>
 
-	<!-- History Section -->
-	<div class="mt-6 rounded-lg border border-gray-200">
-		<button
-			onclick={() => (historyExpanded = !historyExpanded)}
-			class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset"
-			aria-expanded={historyExpanded}
-			aria-controls="history-content"
-			id="history-toggle"
-		>
-			<span class="font-medium text-gray-700">History ({history.length})</span>
-			<svg
-				class="h-5 w-5 text-gray-500 transition-transform duration-200 {historyExpanded
-					? 'rotate-180'
-					: ''}"
-				fill="none"
-				stroke="currentColor"
-				viewBox="0 0 24 24"
-				aria-hidden="true"
-			>
-				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-			</svg>
-		</button>
-
-		{#if historyExpanded}
-			<div
-				class="border-t border-gray-200 px-4 pb-4"
-				id="history-content"
-				aria-labelledby="history-toggle"
-			>
-				{#if history.length > 0}
-					<div class="mt-3 space-y-2">
-						<div class="flex justify-between items-center mb-3">
-							<span class="text-sm text-gray-600">Recent generations</span>
-							<button
-								onclick={clearHistory}
-								class="text-xs text-red-600 hover:text-red-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
-								aria-label="Clear all history"
-							>
-								Clear all
-							</button>
-						</div>
-						{#each history as item (item.id)}
-							<div class="rounded-md border border-gray-200 bg-white p-3">
-								<div class="flex items-start justify-between gap-2">
-									<div class="flex-1 min-w-0">
-										<p class="text-sm text-gray-800 line-clamp-2">{item.altText}</p>
-										<div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
-											<span>{new Date(item.timestamp).toLocaleDateString()}</span>
-											<span>•</span>
-											<span class="capitalize">{item.inputType}</span>
-											{#if item.context}
-												<span>•</span>
-												<span>With context</span>
-											{/if}
-										</div>
-									</div>
-									<div class="flex gap-1">
-										<button
-											onclick={() => loadFromHistory(item)}
-											class="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-											aria-label="Load this alt text"
-										>
-											Load
-										</button>
-										<button
-											onclick={() => compareWithCurrent(item.altText)}
-											class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-											aria-label="Compare with current"
-										>
-											Compare
-										</button>
-									</div>
-								</div>
-							</div>
-						{/each}
-					</div>
-				{:else}
-					<p class="mt-3 text-sm text-gray-500">No previous generations yet.</p>
-				{/if}
-			</div>
-		{/if}
-	</div>
-
 	<!-- Comparison Modal -->
 	{#if showComparison}
 		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -876,6 +836,89 @@
 			{/if}
 		</div>
 	{/if}
+
+	<!-- History Section -->
+	<div class="mt-6 rounded-lg border border-gray-200">
+		<button
+			onclick={() => (historyExpanded = !historyExpanded)}
+			class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset"
+			aria-expanded={historyExpanded}
+			aria-controls="history-content"
+			id="history-toggle"
+		>
+			<span class="font-medium text-gray-700">History ({history.length})</span>
+			<svg
+				class="h-5 w-5 text-gray-500 transition-transform duration-200 {historyExpanded
+					? 'rotate-180'
+					: ''}"
+				fill="none"
+				stroke="currentColor"
+				viewBox="0 0 24 24"
+				aria-hidden="true"
+			>
+				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+			</svg>
+		</button>
+
+		{#if historyExpanded}
+			<div
+				class="border-t border-gray-200 px-4 pb-4"
+				id="history-content"
+				aria-labelledby="history-toggle"
+			>
+				{#if history.length > 0}
+					<div class="mt-3 space-y-2">
+						<div class="flex justify-between items-center mb-3">
+							<span class="text-sm text-gray-600">Recent generations</span>
+							<button
+								onclick={clearHistory}
+								class="text-xs text-red-600 hover:text-red-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+								aria-label="Clear all history"
+							>
+								Clear all
+							</button>
+						</div>
+						{#each history as item (item.id)}
+							<div class="rounded-md border border-gray-200 bg-white p-3">
+								<div class="flex items-start justify-between gap-2">
+									<div class="flex-1 min-w-0">
+										<p class="text-sm text-gray-800 line-clamp-2">{item.altText}</p>
+										<div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
+											<span>{new Date(item.timestamp).toLocaleDateString()}</span>
+											<span>•</span>
+											<span class="capitalize">{item.inputType}</span>
+											{#if item.context}
+												<span>•</span>
+												<span>With context</span>
+											{/if}
+										</div>
+									</div>
+									<div class="flex gap-1">
+										<button
+											onclick={() => loadFromHistory(item)}
+											class="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+											aria-label="Load this alt text"
+										>
+											Load
+										</button>
+										<button
+											onclick={() => compareWithCurrent(item.altText)}
+											class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+											aria-label="Compare with current"
+										>
+											Compare
+										</button>
+									</div>
+								</div>
+							</div>
+						{/each}
+					</div>
+				{:else}
+					<p class="mt-3 text-sm text-gray-500">No previous generations yet.</p>
+				{/if}
+			</div>
+		{/if}
+	</div>
 
 	<!-- Visual Separator -->
 	<div class="mt-8 border-t border-gray-200"></div>
