@@ -83,7 +83,7 @@ async function generateAltTextWithOpenAI({ type, data, context, previousAltText 
 	}
 
 	const response = await openai.chat.completions.create({
-		model: 'o4-mini-2025-04-16',
+		model: 'o1-mini',
 		messages: [
 			{
 				role: 'user',
