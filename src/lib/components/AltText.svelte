@@ -81,7 +81,6 @@
 	// Reset history when URL changes to a valid URL
 	$effect(() => {
 		if (isValidUrl && urlInput) {
-			history.length = 0;
 			generatedAltText = '';
 		}
 	});
