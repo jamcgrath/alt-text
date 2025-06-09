@@ -155,17 +155,18 @@
 		}
 	});
 
-	// Character count analysis
+	// Character count - simple and independent
 	const charCount = $derived(() => {
 		if (!generatedAltText) return 0;
 		return generatedAltText.trim().length;
 	});
 
 	const isOptimalLength = $derived(() => {
-		return charCount >= 20 && charCount <= 125;
+		const count = charCount();
+		return count >= 20 && count <= 125;
 	});
 
-	// Alt text quality analysis
+	// Alt text quality analysis - independent calculation
 	const altTextAnalysis = $derived(() => {
 		if (!generatedAltText) return null;
 
@@ -230,7 +231,6 @@
 		score = Math.max(0, score);
 
 		return {
-			textLength,
 			issues,
 			score,
 			quality:
@@ -601,7 +601,7 @@
 							<div class="rounded-md border border-blue-200 bg-blue-50 p-3">
 								<p class="text-sm text-gray-800">{generatedAltText}</p>
 								<div class="mt-2 text-xs text-gray-600">
-									Characters: {altTextAnalysis?.textLength || 0}
+									Characters: {charCount()}
 								</div>
 							</div>
 						</div>
@@ -723,19 +723,19 @@
 							<span class="text-gray-600">
 								Characters:
 								<span
-									class={altTextAnalysis.textLength > 125
+									class={charCount() > 125
 										? 'font-medium text-red-600'
-										: altTextAnalysis.textLength >= 20 && altTextAnalysis.textLength <= 125
+										: isOptimalLength()
 											? 'text-green-600'
 											: 'text-gray-800'}
 								>
-									{altTextAnalysis.textLength}
+									{charCount()}
 								</span>
 								<span class="text-gray-400">/ 125</span>
 							</span>
-							{#if altTextAnalysis.textLength > 125}
+							{#if charCount() > 125}
 								<span class="rounded bg-red-100 px-2 py-1 text-xs text-red-700">Too long</span>
-							{:else if altTextAnalysis.textLength >= 20 && altTextAnalysis.textLength <= 125}
+							{:else if isOptimalLength()}
 								<span class="rounded bg-green-100 px-2 py-1 text-xs text-green-700"
 									>Good length</span
 								>
