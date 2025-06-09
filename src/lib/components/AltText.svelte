@@ -200,22 +200,15 @@
   <div class="mt-8 border-t border-gray-200"></div>
 
   <!-- WCAG Guidelines Help -->
-  <div class="mt-6 flex justify-center">
+  <div class="mt-6 flex justify-start">
     <button 
       onclick={() => wcagExpanded = !wcagExpanded}
       class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
       title="View WCAG Alt Text Guidelines"
     >
-      <svg 
-        class="w-4 h-4" 
-        fill="none" 
-        stroke="currentColor" 
-        viewBox="0 0 24 24"
-      >
-        <circle cx="12" cy="12" r="10"/>
-        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
-        <line x1="12" y1="17" x2="12.01" y2="17"/>
-      </svg>
+      <div class="w-4 h-4 rounded-full border border-gray-400 flex items-center justify-center text-xs font-medium">
+        ?
+      </div>
       WCAG Alt Text Guidelines
     </button>
   </div>
