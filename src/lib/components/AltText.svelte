@@ -9,6 +9,7 @@
 	let generatedAltText = $state('');
 	let isEditing = $state(false);
 	let copySuccess = $state(false);
+	let announceMessage = $state('');
 
 	// Handle file upload
 	function handleFileSelect(event) {
