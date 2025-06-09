@@ -695,7 +695,7 @@
 				</div>
 
 				<!-- Quality Issues -->
-				{#if qualityFeedback && qualityFeedback.issues.length > 0}
+				{#if qualityFeedback && qualityFeedback.issues && qualityFeedback.issues.length > 0}
 					<div class="rounded-md border border-yellow-200 bg-yellow-50 p-3">
 						<h4 class="mb-2 text-sm font-medium text-yellow-800">Suggestions for improvement:</h4>
 						<ul class="space-y-1 text-sm text-yellow-700">
@@ -717,7 +717,7 @@
 							{/each}
 						</ul>
 					</div>
-				{:else if qualityFeedback && charCount() >= 20 && charCount() <= 125}
+				{:else if qualityFeedback && qualityFeedback.issues && qualityFeedback.issues.length === 0 && charCount() >= 20 && charCount() <= 125}
 					<div class="rounded-md border border-green-200 bg-green-50 p-3">
 						<div class="flex items-center gap-2">
 							<svg class="h-4 w-4 text-green-600" fill="currentColor" viewBox="0 0 20 20">
