@@ -10,6 +10,7 @@
 	let isEditing = $state(false);
 	let copySuccess = $state(false);
 	let announceMessage = $state('');
+	let submitError = $state('');
 
 	// Handle file upload
 	function handleFileSelect(event) {
@@ -74,7 +75,18 @@
 
 	// Handle submit
 	function handleSubmit() {
-		if (!canSubmit) return;
+		// Clear previous error
+		submitError = '';
+
+		if (!canSubmit) {
+			if (mode === 'image') {
+				submitError = 'Please upload an image to generate alt text';
+			} else {
+				submitError = 'Please enter a valid URL to generate alt text';
+			}
+			announceMessage = submitError;
+			return;
+		}
 
 		// TODO: Implement LLM API call
 		const payload =
@@ -291,13 +303,18 @@
 	<div class="mt-6 text-center">
 		<button
 			onclick={handleSubmit}
-			disabled={!canSubmit}
-			class="rounded-lg bg-blue-600 px-8 py-3 font-medium text-white transition-all duration-200 {canSubmit
+			class="rounded-lg bg-blue-600 px-8 py-3 font-medium text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {canSubmit
 				? 'cursor-pointer hover:bg-blue-700'
-				: 'cursor-not-allowed opacity-50'}"
+				: 'cursor-pointer opacity-50'}"
+			aria-describedby={submitError ? 'submit-error' : undefined}
 		>
 			Generate Alt Text
 		</button>
+		{#if submitError}
+			<p class="mt-2 text-sm text-red-500" id="submit-error" role="alert">
+				{submitError}
+			</p>
+		{/if}
 	</div>
 
 	<!-- Generated Alt Text Display -->
