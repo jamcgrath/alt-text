@@ -1,25 +1,28 @@
+// src/routes/api/alt-text/+server.js
 import { json } from '@sveltejs/kit';
 import OpenAI from 'openai';
 import { OPENAI_API_KEY } from '$env/static/private';
 
-const openai = new OpenAI({
-	apiKey: OPENAI_API_KEY
-});
+const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
 
 export async function POST({ request }) {
 	try {
 		const { type, data, context, previousAltText } = await request.json();
 
-		// Validate input
+		// 1. Required fields
 		if (!type || !data) {
-			return json({ error: 'Missing required fields' }, { status: 400 });
+			return json(
+				{ error: 'Missing required fields: type and data are required' },
+				{ status: 400 }
+			);
 		}
 
-		if (type !== 'image' && type !== 'url') {
+		// 2. Allowed types
+		if (!['image', 'url'].includes(type)) {
 			return json({ error: 'Invalid type. Must be "image" or "url"' }, { status: 400 });
 		}
 
-		// For URL type, validate URL format
+		// 3. Validate URL if needed
 		if (type === 'url') {
 			try {
 				new URL(data);
@@ -28,26 +31,17 @@ export async function POST({ request }) {
 			}
 		}
 
-		// For image type, validate base64 format
+		// 4. Validate base64 image prefix if needed
 		if (type === 'image' && !data.startsWith('data:image/')) {
 			return json({ error: 'Invalid image data format' }, { status: 400 });
 		}
 
-		const altText = await generateAltTextWithOpenAI({
-			type,
-			data,
-			context,
-			previousAltText
-		});
-
-		return json({
-			altText,
-			success: true
-		});
+		// Call out to OpenAI
+		const altText = await generateAltTextWithOpenAI({ data, context, previousAltText });
+		return json({ altText, success: true });
 	} catch (error) {
 		console.error('Alt text generation error:', error);
 
-		// Handle specific OpenAI errors
 		if (error.status === 401) {
 			return json({ error: 'Invalid API key' }, { status: 500 });
 		} else if (error.status === 429) {
@@ -60,57 +54,37 @@ export async function POST({ request }) {
 	}
 }
 
-async function generateAltTextWithOpenAI({ type, data, context, previousAltText }) {
-	const prompt = buildPrompt(context, previousAltText);
+async function generateAltTextWithOpenAI({ data, context, previousAltText }) {
+	// 1. Build your instruction prompt (force a single-line answer)
+	const promptParts = [
+		'Generate a single-line alt text under 125 characters,',
+		'avoiding "image of"/"picture of", focusing on essential information.'
+	];
+	if (context) promptParts.push(`Context: ${context}.`);
+	if (previousAltText) promptParts.push(`Previous: "${previousAltText}". Improve it.`);
+	promptParts.push('Return only the alt text.');
+	const prompt = promptParts.join(' ');
 
-	let content = [{ type: 'text', text: prompt }];
+	// 2. Vision-style input payload
+	const input = [
+		{
+			role: 'user',
+			content: [
+				{ type: 'input_text', text: prompt },
+				{ type: 'input_image', image_url: data }
+			]
+		}
+	];
 
-	// Add image to content based on type
-	if (type === 'image') {
-		content.push({
-			type: 'image_url',
-			image_url: {
-				url: data
-			}
-		});
-	} else if (type === 'url') {
-		content.push({
-			type: 'image_url',
-			image_url: {
-				url: data
-			}
-		});
-	}
-
-	const response = await openai.chat.completions.create({
-		model: 'o1-mini',
-		messages: [
-			{
-				role: 'user',
-				content: content
-			}
-		],
-		max_tokens: 300
+	// 3. Call the Responses API without `stop`
+	const response = await openai.responses.create({
+		model: 'o4-mini-2025-04-16',
+		input,
+		reasoning: { effort: 'high' },
+		max_output_tokens: 100
 	});
 
-	return response.choices[0].message.content.trim();
-}
-
-function buildPrompt(context, previousAltText) {
-	let prompt = 'Generate concise, descriptive alt text for this image. ';
-	prompt +=
-		"Follow WCAG guidelines: be under 125 characters, avoid starting with 'image of' or 'picture of', focus on essential information that conveys the purpose and meaning of the image. ";
-	prompt += 'Be specific and descriptive but concise. ';
-
-	if (context) {
-		prompt += `Additional context: ${context}. `;
-	}
-
-	if (previousAltText) {
-		prompt += `Previous version: "${previousAltText}". Please improve this or provide a better alternative. `;
-	}
-
-	prompt += 'Return only the alt text, no additional explanation.';
-
-	return prompt;
+	// 4. Return the trimmed content
+	const message = response.choices?.[0]?.message?.content;
+	return message?.trim() ?? '';
 }
