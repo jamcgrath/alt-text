@@ -137,12 +137,9 @@
 	});
 
 	// Determine button text based on state
-	const buttonText = $derived(() => {
-		if (isLoading) {
-			return 'Generating...';
-		}
-		return !generatedAltText ? 'Generate Alt Text' : 'Regenerate Alt Text';
-	});
+	const buttonText = $derived(
+		isLoading ? 'Generating...' : !generatedAltText ? 'Generate Alt Text' : 'Regenerate Alt Text'
+	);
 
 	// Handle submit
 	async function handleSubmit() {
