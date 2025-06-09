@@ -74,9 +74,7 @@
 	const canSubmit = $derived((mode === 'image' && imageData) || (mode === 'url' && isValidUrl));
 
 	// Determine button text based on state
-	const buttonText = $derived(
-		!generatedAltText ? 'Generate Alt Text' : 'Regenerate Alt Text'
-	);
+	const buttonText = $derived(!generatedAltText ? 'Generate Alt Text' : 'Regenerate Alt Text');
 
 	// Handle submit
 	function handleSubmit() {
@@ -96,30 +94,30 @@
 		// TODO: Implement LLM API call
 		const payload =
 			mode === 'image'
-				? { 
-					type: 'image', 
-					data: imageData, 
-					context: contextText,
-					previousAltText: generatedAltText || null
-				}
-				: { 
-					type: 'url', 
-					data: sanitizedUrl, 
-					context: contextText,
-					previousAltText: generatedAltText || null
-				};
+				? {
+						type: 'image',
+						data: imageData,
+						context: contextText,
+						previousAltText: generatedAltText || null
+					}
+				: {
+						type: 'url',
+						data: sanitizedUrl,
+						context: contextText,
+						previousAltText: generatedAltText || null
+					};
 
 		console.log('Submitting:', payload);
 
 		// Show dummy alt text immediately
 		const isRegeneration = !!generatedAltText;
-		generatedAltText = isRegeneration 
-			? "An updated colorful bar chart displaying quarterly sales figures with a clear upward trajectory from Q1 to Q4, demonstrating consistent business growth and improved performance throughout the fiscal year."
-			: "A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.";
-		
+		generatedAltText = isRegeneration
+			? 'An updated colorful bar chart displaying quarterly sales figures with a clear upward trajectory from Q1 to Q4, demonstrating consistent business growth and improved performance throughout the fiscal year.'
+			: 'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.';
+
 		isEditing = false;
-		announceMessage = isRegeneration 
-			? 'Alt text has been regenerated successfully' 
+		announceMessage = isRegeneration
+			? 'Alt text has been regenerated successfully'
 			: 'Alt text has been generated successfully';
 	}
 
@@ -151,7 +149,7 @@
 			await navigator.clipboard.writeText(generatedAltText);
 			copySuccess = true;
 			announceMessage = 'Alt text copied to clipboard';
-			setTimeout(() => copySuccess = false, 2000);
+			setTimeout(() => (copySuccess = false), 2000);
 		} catch (err) {
 			console.error('Failed to copy text: ', err);
 			announceMessage = 'Failed to copy text to clipboard';
@@ -173,9 +171,14 @@
 	<!-- Mode Switch -->
 	<fieldset class="mb-5">
 		<legend class="sr-only">Choose input method for alt text generation</legend>
-		<div class="mb-5 flex rounded-lg bg-gray-100 p-1" role="tablist" aria-label="Input method selection">
+		<div
+			class="mb-5 flex rounded-lg bg-gray-100 p-1"
+			role="tablist"
+			aria-label="Input method selection"
+		>
 			<button
-				class="flex-1 rounded-md px-6 py-3 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {mode === 'image'
+				class="flex-1 rounded-md px-6 py-3 font-medium transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none {mode ===
+				'image'
 					? 'bg-white text-blue-600 shadow-sm'
 					: 'text-gray-600 hover:text-gray-800'}"
 				onclick={() => (mode = 'image')}
@@ -187,7 +190,8 @@
 				Image
 			</button>
 			<button
-				class="flex-1 rounded-md px-6 py-3 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {mode === 'url'
+				class="flex-1 rounded-md px-6 py-3 font-medium transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none {mode ===
+				'url'
 					? 'bg-white text-blue-600 shadow-sm'
 					: 'text-gray-600 hover:text-gray-800'}"
 				onclick={() => (mode = 'url')}
@@ -206,7 +210,7 @@
 		{#if mode === 'image'}
 			<!-- File Upload/Drop Area -->
 			<div
-				class="cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {isDragOver
+				class="cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none {isDragOver
 					? 'border-blue-500 bg-blue-50'
 					: 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'}"
 				ondrop={handleDrop}
@@ -231,7 +235,7 @@
 					<div class="space-y-3">
 						<img
 							src={imageData}
-							alt="Uploaded image preview"
+							alt="Uploaded preview"
 							class="mx-auto max-h-72 max-w-full rounded-lg"
 						/>
 						<button
@@ -239,7 +243,7 @@
 								imageData = null;
 								announceMessage = 'Image removed';
 							}}
-							class="rounded-md bg-red-500 px-4 py-2 text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+							class="rounded-md bg-red-500 px-4 py-2 text-white transition-colors hover:bg-red-600 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
 							aria-label="Remove uploaded image"
 						>
 							Remove
@@ -279,7 +283,7 @@
 					id="url-input"
 					placeholder="Enter image URL..."
 					bind:value={urlInput}
-					class="w-full rounded-lg border-2 border-gray-300 p-4 text-base transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+					class="w-full rounded-lg border-2 border-gray-300 p-4 text-base transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 					aria-describedby={hasUrlError ? 'url-error' : isValidUrl ? 'url-success' : undefined}
 					aria-invalid={hasUrlError}
 				/>
@@ -297,7 +301,7 @@
 	<div class="mt-6 rounded-lg border border-gray-200">
 		<button
 			onclick={() => (contextExpanded = !contextExpanded)}
-			class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+			class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:outline-none focus:ring-inset"
 			aria-expanded={contextExpanded}
 			aria-controls="context-content"
 			id="context-toggle"
@@ -317,13 +321,19 @@
 		</button>
 
 		{#if contextExpanded}
-			<div class="border-t border-gray-200 px-4 pb-4" id="context-content" aria-labelledby="context-toggle">
-				<label for="context-textarea" class="sr-only">Additional context for alt text generation</label>
+			<div
+				class="border-t border-gray-200 px-4 pb-4"
+				id="context-content"
+				aria-labelledby="context-toggle"
+			>
+				<label for="context-textarea" class="sr-only"
+					>Additional context for alt text generation</label
+				>
 				<textarea
 					bind:value={contextText}
 					id="context-textarea"
 					placeholder="Describe the image context, intended audience, or specific details you'd like emphasized in the alt text..."
-					class="mt-3 w-full resize-none rounded-md border border-gray-300 p-3 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+					class="mt-3 w-full resize-none rounded-md border border-gray-300 p-3 transition-colors focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 					rows="4"
 					aria-describedby="context-help"
 				></textarea>
@@ -340,7 +350,7 @@
 	<div class="mt-6 text-center">
 		<button
 			onclick={handleSubmit}
-			class="rounded-lg bg-blue-600 px-8 py-3 font-medium text-white transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {canSubmit
+			class="rounded-lg bg-blue-600 px-8 py-3 font-medium text-white transition-all duration-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none {canSubmit
 				? 'cursor-pointer hover:bg-blue-700'
 				: 'cursor-pointer opacity-50'}"
 			aria-describedby={submitError ? 'submit-error' : undefined}
@@ -356,58 +366,84 @@
 
 	<!-- Generated Alt Text Display -->
 	{#if generatedAltText}
-		<div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4" role="region" aria-labelledby="result-heading">
+		<div
+			class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4"
+			role="region"
+			aria-labelledby="result-heading"
+		>
 			<div class="mb-3 flex items-center justify-between">
 				<h3 class="font-medium text-gray-800" id="result-heading">Generated Alt Text</h3>
 				<button
 					onclick={copyToClipboard}
-					class="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1 text-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+					class="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1 text-sm transition-colors hover:bg-gray-50 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 					aria-label="Copy alt text to clipboard"
 				>
 					{#if copySuccess}
-						<svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+						<svg
+							class="h-4 w-4 text-green-600"
+							fill="none"
+							stroke="currentColor"
+							viewBox="0 0 24 24"
+						>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M5 13l4 4L19 7"
+							/>
 						</svg>
 						Copied!
 					{:else}
 						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"
+							/>
 						</svg>
 						Copy
 					{/if}
 				</button>
 			</div>
-			
+
 			<div class="relative">
 				<label for="alt-text-result" class="sr-only">Generated alt text (click to edit)</label>
-				<textarea 
+				<textarea
 					bind:value={generatedAltText}
 					readonly={!isEditing}
 					onclick={handleTextareaClick}
 					oninput={handleTextareaInput}
 					id="alt-text-result"
-					class="w-full resize-none rounded-md border border-gray-300 p-3 transition-all duration-200 {isEditing ? 'bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2' : 'cursor-pointer bg-gray-100 hover:bg-gray-200'}"
+					class="w-full resize-none rounded-md border border-gray-300 p-3 transition-all duration-200 {isEditing
+						? 'bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'
+						: 'cursor-pointer bg-gray-100 hover:bg-gray-200'}"
 					style="min-height: 60px; overflow: hidden;"
 					aria-describedby="edit-instructions"
 				></textarea>
-				
+
 				{#if !isEditing}
-					<div class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity hover:opacity-100">
-						<div class="rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white" id="edit-instructions">
+					<div
+						class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity hover:opacity-100"
+					>
+						<div
+							class="bg-opacity-75 rounded bg-black px-2 py-1 text-xs text-white"
+							id="edit-instructions"
+						>
 							Click to edit
 						</div>
 					</div>
 				{/if}
 			</div>
-			
+
 			{#if isEditing}
 				<div class="mt-2 flex justify-end gap-2">
-					<button 
+					<button
 						onclick={() => {
 							isEditing = false;
 							announceMessage = 'Finished editing alt text';
 						}}
-						class="px-3 py-1 text-sm text-gray-600 transition-colors hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+						class="px-3 py-1 text-sm text-gray-600 transition-colors hover:text-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 						aria-label="Finish editing alt text"
 					>
 						Done
@@ -424,7 +460,7 @@
 	<div class="mt-6 flex justify-start">
 		<button
 			onclick={() => (wcagExpanded = !wcagExpanded)}
-			class="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+			class="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-800 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 			aria-expanded={wcagExpanded}
 			aria-controls="wcag-content"
 			aria-label="View WCAG Alt Text Guidelines"
@@ -440,7 +476,12 @@
 	</div>
 
 	{#if wcagExpanded}
-		<div class="mt-4 rounded-lg border border-gray-200" id="wcag-content" role="region" aria-label="WCAG Alt Text Guidelines">
+		<div
+			class="mt-4 rounded-lg border border-gray-200"
+			id="wcag-content"
+			role="region"
+			aria-label="WCAG Alt Text Guidelines"
+		>
 			<div class="px-4 py-4">
 				<div class="mt-3 space-y-4 text-sm">
 					<div>
