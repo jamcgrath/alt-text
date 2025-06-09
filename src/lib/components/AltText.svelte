@@ -231,12 +231,16 @@
 					<div class="space-y-3">
 						<img
 							src={imageData}
-							alt="Uploaded preview"
+							alt="Uploaded image preview"
 							class="mx-auto max-h-72 max-w-full rounded-lg"
 						/>
 						<button
-							onclick={() => (imageData = null)}
-							class="rounded-md bg-red-500 px-4 py-2 text-white transition-colors hover:bg-red-600"
+							onclick={() => {
+								imageData = null;
+								announceMessage = 'Image removed';
+							}}
+							class="rounded-md bg-red-500 px-4 py-2 text-white transition-colors hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+							aria-label="Remove uploaded image"
 						>
 							Remove
 						</button>
@@ -249,6 +253,7 @@
 								fill="none"
 								stroke="currentColor"
 								viewBox="0 0 24 24"
+								aria-hidden="true"
 							>
 								<path
 									stroke-linecap="round"
@@ -257,7 +262,7 @@
 									d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
 								/>
 							</svg>
-							<div>
+							<div id="upload-instructions">
 								<p class="mb-2 text-lg text-gray-700">Drop an image here or click to upload</p>
 								<span class="text-sm text-gray-500">Supports: JPG, PNG, GIF, WebP</span>
 							</div>
@@ -268,17 +273,21 @@
 		{:else}
 			<!-- URL Input -->
 			<div class="space-y-3 py-5">
+				<label for="url-input" class="sr-only">Image URL</label>
 				<input
 					type="url"
+					id="url-input"
 					placeholder="Enter image URL..."
 					bind:value={urlInput}
-					class="w-full rounded-lg border-2 border-gray-300 p-4 text-base transition-colors focus:border-blue-500 focus:outline-none"
+					class="w-full rounded-lg border-2 border-gray-300 p-4 text-base transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+					aria-describedby={hasUrlError ? 'url-error' : isValidUrl ? 'url-success' : undefined}
+					aria-invalid={hasUrlError}
 				/>
 				{#if hasUrlError}
-					<p class="text-sm text-red-500">Please enter a valid URL</p>
+					<p class="text-sm text-red-500" id="url-error" role="alert">Please enter a valid URL</p>
 				{/if}
 				{#if isValidUrl}
-					<p class="text-sm break-all text-green-600">Valid URL: {sanitizedUrl}</p>
+					<p class="text-sm break-all text-green-600" id="url-success">Valid URL: {sanitizedUrl}</p>
 				{/if}
 			</div>
 		{/if}
@@ -288,7 +297,10 @@
 	<div class="mt-6 rounded-lg border border-gray-200">
 		<button
 			onclick={() => (contextExpanded = !contextExpanded)}
-			class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50"
+			class="flex w-full items-center justify-between px-4 py-3 text-left transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-inset"
+			aria-expanded={contextExpanded}
+			aria-controls="context-content"
+			id="context-toggle"
 		>
 			<span class="font-medium text-gray-700">Additional Context (Optional)</span>
 			<svg
@@ -298,20 +310,24 @@
 				fill="none"
 				stroke="currentColor"
 				viewBox="0 0 24 24"
+				aria-hidden="true"
 			>
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 			</svg>
 		</button>
 
 		{#if contextExpanded}
-			<div class="border-t border-gray-200 px-4 pb-4">
+			<div class="border-t border-gray-200 px-4 pb-4" id="context-content" aria-labelledby="context-toggle">
+				<label for="context-textarea" class="sr-only">Additional context for alt text generation</label>
 				<textarea
 					bind:value={contextText}
+					id="context-textarea"
 					placeholder="Describe the image context, intended audience, or specific details you'd like emphasized in the alt text..."
-					class="mt-3 w-full resize-none rounded-md border border-gray-300 p-3 transition-colors focus:border-blue-500 focus:outline-none"
+					class="mt-3 w-full resize-none rounded-md border border-gray-300 p-3 transition-colors focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
 					rows="4"
+					aria-describedby="context-help"
 				></textarea>
-				<p class="mt-2 text-sm text-gray-500">
+				<p class="mt-2 text-sm text-gray-500" id="context-help">
 					Example: "This chart shows quarterly sales data - focus on the upward trend rather than
 					specific numbers" or "This decorative image sets the mood but doesn't convey essential
 					information."
@@ -340,13 +356,13 @@
 
 	<!-- Generated Alt Text Display -->
 	{#if generatedAltText}
-		<div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+		<div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4" role="region" aria-labelledby="result-heading">
 			<div class="mb-3 flex items-center justify-between">
-				<h3 class="font-medium text-gray-800">Generated Alt Text</h3>
+				<h3 class="font-medium text-gray-800" id="result-heading">Generated Alt Text</h3>
 				<button
 					onclick={copyToClipboard}
-					class="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1 text-sm transition-colors hover:bg-gray-50"
-					title="Copy to clipboard"
+					class="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1 text-sm transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+					aria-label="Copy alt text to clipboard"
 				>
 					{#if copySuccess}
 						<svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -363,18 +379,21 @@
 			</div>
 			
 			<div class="relative">
+				<label for="alt-text-result" class="sr-only">Generated alt text (click to edit)</label>
 				<textarea 
 					bind:value={generatedAltText}
 					readonly={!isEditing}
 					onclick={handleTextareaClick}
 					oninput={handleTextareaInput}
-					class="w-full resize-none rounded-md border border-gray-300 p-3 transition-all duration-200 {isEditing ? 'bg-white focus:border-blue-500 focus:outline-none' : 'cursor-pointer bg-gray-100 hover:bg-gray-200'}"
+					id="alt-text-result"
+					class="w-full resize-none rounded-md border border-gray-300 p-3 transition-all duration-200 {isEditing ? 'bg-white focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2' : 'cursor-pointer bg-gray-100 hover:bg-gray-200'}"
 					style="min-height: 60px; overflow: hidden;"
+					aria-describedby="edit-instructions"
 				></textarea>
 				
 				{#if !isEditing}
 					<div class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity hover:opacity-100">
-						<div class="rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white">
+						<div class="rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white" id="edit-instructions">
 							Click to edit
 						</div>
 					</div>
@@ -384,8 +403,12 @@
 			{#if isEditing}
 				<div class="mt-2 flex justify-end gap-2">
 					<button 
-						onclick={() => isEditing = false}
-						class="px-3 py-1 text-sm text-gray-600 transition-colors hover:text-gray-800"
+						onclick={() => {
+							isEditing = false;
+							announceMessage = 'Finished editing alt text';
+						}}
+						class="px-3 py-1 text-sm text-gray-600 transition-colors hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+						aria-label="Finish editing alt text"
 					>
 						Done
 					</button>
@@ -401,11 +424,14 @@
 	<div class="mt-6 flex justify-start">
 		<button
 			onclick={() => (wcagExpanded = !wcagExpanded)}
-			class="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-800"
-			title="View WCAG Alt Text Guidelines"
+			class="inline-flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+			aria-expanded={wcagExpanded}
+			aria-controls="wcag-content"
+			aria-label="View WCAG Alt Text Guidelines"
 		>
 			<div
 				class="flex h-4 w-4 items-center justify-center rounded-full border border-gray-400 text-xs font-medium"
+				aria-hidden="true"
 			>
 				?
 			</div>
@@ -414,7 +440,7 @@
 	</div>
 
 	{#if wcagExpanded}
-		<div class="mt-4 rounded-lg border border-gray-200">
+		<div class="mt-4 rounded-lg border border-gray-200" id="wcag-content" role="region" aria-label="WCAG Alt Text Guidelines">
 			<div class="px-4 py-4">
 				<div class="mt-3 space-y-4 text-sm">
 					<div>
@@ -466,3 +492,17 @@
 		</div>
 	{/if}
 </div>
+
+<style>
+	.sr-only {
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		padding: 0;
+		margin: -1px;
+		overflow: hidden;
+		clip: rect(0, 0, 0, 0);
+		white-space: nowrap;
+		border: 0;
+	}
+</style>
