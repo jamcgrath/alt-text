@@ -301,49 +301,52 @@
 		announceMessage = 'Generating alt text...';
 
 		try {
-			// TODO: Implement LLM API call
-			const payload =
-				mode === 'image'
-					? {
-							type: 'image',
-							data: imageData,
-							context: contextText,
-							previousAltText: generatedAltText || null
-						}
-					: {
-							type: 'url',
-							data: sanitizedUrl,
-							context: contextText,
-							previousAltText: generatedAltText || null
-						};
+			const payload = mode === 'image'
+				? {
+					type: 'image',
+					data: imageData,
+					context: contextText,
+					previousAltText: generatedAltText || null
+				}
+				: {
+					type: 'url',
+					data: sanitizedUrl,
+					context: contextText,
+					previousAltText: generatedAltText || null
+				};
 
-			console.log('Submitting:', payload);
+			const response = await fetch('/api/generate-alt-text', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify(payload)
+			});
 
-			// Simulate API delay
-			await new Promise((resolve) => setTimeout(resolve, 2000));
+			const result = await response.json();
 
-			// Show dummy alt text
+			if (!response.ok) {
+				throw new Error(result.error || 'Failed to generate alt text');
+			}
+
 			const isRegeneration = !!generatedAltText;
-			const newAltText = isRegeneration
-				? 'An updated colorful bar chart displaying quarterly sales figures with a clear upward trajectory from Q1 to Q4, demonstrating consistent business growth and improved performance throughout the fiscal year.'
-				: 'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.';
-
-			generatedAltText = newAltText;
+			generatedAltText = result.altText;
 
 			// Save to history
 			const inputData = mode === 'image' 
 				? { hasImage: true, imageSize: imageData ? 'uploaded' : null }
 				: { url: sanitizedUrl };
 			
-			saveToHistory(newAltText, inputData);
+			saveToHistory(result.altText, inputData);
 
 			isEditing = false;
 			announceMessage = isRegeneration
 				? 'Alt text has been regenerated successfully'
 				: 'Alt text has been generated successfully';
+
 		} catch (error) {
 			console.error('Error generating alt text:', error);
-			submitError = 'Failed to generate alt text. Please try again.';
+			submitError = error.message || 'Failed to generate alt text. Please try again.';
 			announceMessage = 'Error generating alt text';
 		} finally {
 			isLoading = false;
