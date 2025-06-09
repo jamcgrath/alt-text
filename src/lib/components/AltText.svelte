@@ -170,14 +170,15 @@
 		if (!generatedAltText) return null;
 
 		const text = generatedAltText.trim();
+		const textLength = text.length;
 		const issues = [];
 		let score = 100;
 
 		// Check character count
-		if (charCount > 125) {
-			issues.push(`Too long (${charCount} characters). WCAG recommends under 125 characters.`);
+		if (textLength > 125) {
+			issues.push(`Too long (${textLength} characters). WCAG recommends under 125 characters.`);
 			score -= 20;
-		} else if (charCount < 10) {
+		} else if (textLength < 10) {
 			issues.push('Very short. Consider adding more descriptive details.');
 			score -= 15;
 		}
@@ -221,7 +222,7 @@
 		}
 
 		// Positive feedback for good practices
-		if (charCount >= 20 && charCount <= 100) {
+		if (textLength >= 20 && textLength <= 100) {
 			score += 5; // Bonus for good length
 		}
 
