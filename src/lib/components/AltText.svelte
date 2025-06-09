@@ -3,6 +3,8 @@
   let imageData = $state(null);
   let urlInput = $state('');
   let isDragOver = $state(false);
+  let contextExpanded = $state(false);
+  let contextText = $state('');
 
   // Handle file upload
   function handleFileSelect(event) {
@@ -64,7 +66,11 @@
     if (!canSubmit) return;
     
     // TODO: Implement LLM API call
-    console.log('Submitting:', mode === 'image' ? { type: 'image', data: imageData } : { type: 'url', data: sanitizedUrl });
+    const payload = mode === 'image' 
+      ? { type: 'image', data: imageData, context: contextText }
+      : { type: 'url', data: sanitizedUrl, context: contextText };
+    
+    console.log('Submitting:', payload);
   }
 </script>
 
@@ -142,6 +148,38 @@
         {#if isValidUrl}
           <p class="text-green-600 text-sm break-all">Valid URL: {sanitizedUrl}</p>
         {/if}
+      </div>
+    {/if}
+  </div>
+
+  <!-- Context Section -->
+  <div class="mt-6 border border-gray-200 rounded-lg">
+    <button 
+      onclick={() => contextExpanded = !contextExpanded}
+      class="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+    >
+      <span class="font-medium text-gray-700">Additional Context (Optional)</span>
+      <svg 
+        class="w-5 h-5 text-gray-500 transition-transform duration-200 {contextExpanded ? 'rotate-180' : ''}"
+        fill="none" 
+        stroke="currentColor" 
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </button>
+    
+    {#if contextExpanded}
+      <div class="px-4 pb-4 border-t border-gray-200">
+        <textarea 
+          bind:value={contextText}
+          placeholder="Describe the image context, intended audience, or specific details you'd like emphasized in the alt text..."
+          class="w-full mt-3 p-3 border border-gray-300 rounded-md resize-none focus:outline-none focus:border-blue-500 transition-colors"
+          rows="4"
+        ></textarea>
+        <p class="text-sm text-gray-500 mt-2">
+          Example: "This image will be used in a medical blog post about diabetes management for elderly patients."
+        </p>
       </div>
     {/if}
   </div>
