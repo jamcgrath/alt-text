@@ -6,9 +6,7 @@
 	let contextExpanded = $state(false);
 	let contextText = $state('');
 	let wcagExpanded = $state(false);
-	let generatedAltText = $state(
-		'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.'
-	);
+	let generatedAltText = $state('');
 	let isEditing = $state(false);
 	let copySuccess = $state(false);
 	let announceMessage = $state('');
