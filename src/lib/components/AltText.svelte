@@ -16,6 +16,9 @@
 		const file = event.target.files[0];
 		if (file && file.type.startsWith('image/')) {
 			convertToBase64(file);
+			announceMessage = `Image ${file.name} uploaded successfully`;
+		} else if (file) {
+			announceMessage = 'Please select a valid image file';
 		}
 	}
 
@@ -27,6 +30,9 @@
 		const file = event.dataTransfer.files[0];
 		if (file && file.type.startsWith('image/')) {
 			convertToBase64(file);
+			announceMessage = `Image ${file.name} uploaded via drag and drop`;
+		} else if (file) {
+			announceMessage = 'Please drop a valid image file';
 		}
 	}
 
@@ -81,6 +87,15 @@
 		// Show dummy alt text immediately
 		generatedAltText = "A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.";
 		isEditing = false;
+		announceMessage = 'Alt text has been generated successfully';
+	}
+
+	// Handle keyboard events for file upload area
+	function handleUploadKeydown(event) {
+		if (event.key === 'Enter' || event.key === ' ') {
+			event.preventDefault();
+			document.getElementById('file-input')?.click();
+		}
 	}
 
 	// Handle textarea auto-resize
@@ -93,6 +108,7 @@
 	function handleTextareaClick() {
 		if (!isEditing) {
 			isEditing = true;
+			announceMessage = 'Alt text is now editable';
 		}
 	}
 
@@ -101,9 +117,11 @@
 		try {
 			await navigator.clipboard.writeText(generatedAltText);
 			copySuccess = true;
+			announceMessage = 'Alt text copied to clipboard';
 			setTimeout(() => copySuccess = false, 2000);
 		} catch (err) {
 			console.error('Failed to copy text: ', err);
+			announceMessage = 'Failed to copy text to clipboard';
 		}
 	}
 
@@ -114,37 +132,58 @@
 </script>
 
 <div class="mx-auto max-w-2xl p-5">
-	<!-- Mode Switch -->
-	<div class="mb-5 flex rounded-lg bg-gray-100 p-1">
-		<button
-			class="flex-1 rounded-md px-6 py-3 font-medium transition-all duration-200 {mode === 'image'
-				? 'bg-white text-blue-600 shadow-sm'
-				: 'text-gray-600 hover:text-gray-800'}"
-			onclick={() => (mode = 'image')}
-		>
-			Image
-		</button>
-		<button
-			class="flex-1 rounded-md px-6 py-3 font-medium transition-all duration-200 {mode === 'url'
-				? 'bg-white text-blue-600 shadow-sm'
-				: 'text-gray-600 hover:text-gray-800'}"
-			onclick={() => (mode = 'url')}
-		>
-			URL
-		</button>
+	<!-- Screen Reader Announcements -->
+	<div aria-live="polite" aria-atomic="true" class="sr-only">
+		{announceMessage}
 	</div>
 
+	<!-- Mode Switch -->
+	<fieldset class="mb-5">
+		<legend class="sr-only">Choose input method for alt text generation</legend>
+		<div class="mb-5 flex rounded-lg bg-gray-100 p-1" role="tablist" aria-label="Input method selection">
+			<button
+				class="flex-1 rounded-md px-6 py-3 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {mode === 'image'
+					? 'bg-white text-blue-600 shadow-sm'
+					: 'text-gray-600 hover:text-gray-800'}"
+				onclick={() => (mode = 'image')}
+				role="tab"
+				aria-selected={mode === 'image'}
+				aria-controls="input-panel"
+				id="image-tab"
+			>
+				Image
+			</button>
+			<button
+				class="flex-1 rounded-md px-6 py-3 font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {mode === 'url'
+					? 'bg-white text-blue-600 shadow-sm'
+					: 'text-gray-600 hover:text-gray-800'}"
+				onclick={() => (mode = 'url')}
+				role="tab"
+				aria-selected={mode === 'url'}
+				aria-controls="input-panel"
+				id="url-tab"
+			>
+				URL
+			</button>
+		</div>
+	</fieldset>
+
 	<!-- Input Area -->
-	<div class="min-h-[200px]">
+	<div class="min-h-[200px]" role="tabpanel" id="input-panel" aria-labelledby="{mode}-tab">
 		{#if mode === 'image'}
 			<!-- File Upload/Drop Area -->
 			<div
-				class="cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-all duration-200 {isDragOver
+				class="cursor-pointer rounded-xl border-2 border-dashed p-10 text-center transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 {isDragOver
 					? 'border-blue-500 bg-blue-50'
 					: 'border-gray-300 hover:border-blue-500 hover:bg-blue-50'}"
 				ondrop={handleDrop}
 				ondragover={handleDragOver}
 				ondragleave={handleDragLeave}
+				onkeydown={handleUploadKeydown}
+				tabindex="0"
+				role="button"
+				aria-label="Upload image file or drag and drop. Press Enter or Space to select file."
+				aria-describedby="upload-instructions"
 			>
 				<input
 					type="file"
@@ -152,6 +191,7 @@
 					onchange={handleFileSelect}
 					id="file-input"
 					class="hidden"
+					aria-label="Select image file"
 				/>
 
 				{#if imageData}
