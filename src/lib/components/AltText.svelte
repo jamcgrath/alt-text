@@ -6,7 +6,9 @@
 	let contextExpanded = $state(false);
 	let contextText = $state('');
 	let wcagExpanded = $state(false);
-	let generatedAltText = $state('');
+	let generatedAltText = $state(
+		'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.'
+	);
 	let isEditing = $state(false);
 	let copySuccess = $state(false);
 	let announceMessage = $state('');
@@ -97,7 +99,7 @@
 
 	function saveToHistory(altText, inputData) {
 		if (typeof window === 'undefined') return;
-		
+
 		const historyItem = {
 			id: Date.now(),
 			altText: altText.trim(),
@@ -109,13 +111,13 @@
 
 		const existingHistory = getHistory();
 		const newHistory = [historyItem, ...existingHistory.slice(0, maxHistoryItems - 1)];
-		
+
 		localStorage.setItem(historyKey, JSON.stringify(newHistory));
 	}
 
 	function getHistory() {
 		if (typeof window === 'undefined') return [];
-		
+
 		try {
 			const stored = localStorage.getItem(historyKey);
 			return stored ? JSON.parse(stored) : [];
@@ -126,13 +128,13 @@
 
 	function clearHistory() {
 		if (typeof window === 'undefined') return;
-		
+
 		// Clear localStorage
 		localStorage.removeItem(historyKey);
-		
+
 		// Clear mock data
 		history.length = 0;
-		
+
 		announceMessage = 'History cleared';
 	}
 
@@ -147,8 +149,54 @@
 		showComparison = true;
 	}
 
-	// Get history for display
-	const history = $state(getHistory());
+	// Get history for display - mock data for now
+	const history = $state([
+		{
+			id: 1703123456789,
+			altText:
+				'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.',
+			timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
+			inputType: 'image',
+			context: 'Focus on the upward trend rather than specific numbers',
+			hasImage: true
+		},
+		{
+			id: 1703123456788,
+			altText:
+				'A professional headshot of a smiling woman in business attire against a neutral background.',
+			timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
+			inputType: 'url',
+			context: '',
+			url: 'https://example.com/headshot.jpg'
+		},
+		{
+			id: 1703123456787,
+			altText:
+				'Screenshot of a mobile app interface showing a login form with username and password fields.',
+			timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
+			inputType: 'image',
+			context: 'This screenshot shows the final result users should expect',
+			hasImage: true
+		},
+		{
+			id: 1703123456786,
+			altText:
+				'Infographic displaying climate change statistics with rising temperature graphs and melting ice imagery.',
+			timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
+			inputType: 'url',
+			context: '',
+			url: 'https://example.com/climate-infographic.png'
+		},
+		{
+			id: 1703123456785,
+			altText:
+				'A group photo of diverse team members celebrating in an office setting with confetti and balloons.',
+			timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
+			inputType: 'image',
+			context: 'Emphasize the celebratory and diverse nature of the team',
+			hasImage: true
+		}
+	]);
 
 	// Alt text quality analysis
 	const altTextAnalysis = $derived(() => {
@@ -258,24 +306,25 @@
 		announceMessage = 'Generating alt text...';
 
 		try {
-			const payload = mode === 'image'
-				? {
-					type: 'image',
-					data: imageData,
-					context: contextText,
-					previousAltText: generatedAltText || null
-				}
-				: {
-					type: 'url',
-					data: sanitizedUrl,
-					context: contextText,
-					previousAltText: generatedAltText || null
-				};
-
+			const payload =
+				mode === 'image'
+					? {
+							type: 'image',
+							data: imageData,
+							context: contextText,
+							previousAltText: generatedAltText || null
+						}
+					: {
+							type: 'url',
+							data: sanitizedUrl,
+							context: contextText,
+							previousAltText: generatedAltText || null
+						};
+			console.log('Submitting payload:', payload);
 			const response = await fetch('/api/generate-alt-text', {
 				method: 'POST',
 				headers: {
-					'Content-Type': 'application/json',
+					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify(payload)
 			});
@@ -290,17 +339,17 @@
 			generatedAltText = result.altText;
 
 			// Save to history
-			const inputData = mode === 'image' 
-				? { hasImage: true, imageSize: imageData ? 'uploaded' : null }
-				: { url: sanitizedUrl };
-			
+			const inputData =
+				mode === 'image'
+					? { hasImage: true, imageSize: imageData ? 'uploaded' : null }
+					: { url: sanitizedUrl };
+
 			saveToHistory(result.altText, inputData);
 
 			isEditing = false;
 			announceMessage = isRegeneration
 				? 'Alt text has been regenerated successfully'
 				: 'Alt text has been generated successfully';
-
 		} catch (error) {
 			console.error('Error generating alt text:', error);
 			submitError = error.message || 'Failed to generate alt text. Please try again.';
@@ -560,25 +609,30 @@
 
 	<!-- Comparison Modal -->
 	{#if showComparison}
-		<div class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-			<div class="bg-white rounded-lg max-w-4xl w-full max-h-[80vh] overflow-hidden">
-				<div class="flex items-center justify-between p-4 border-b border-gray-200">
+		<div class="bg-opacity-50 fixed inset-0 z-50 flex items-center justify-center bg-black p-4">
+			<div class="max-h-[80vh] w-full max-w-4xl overflow-hidden rounded-lg bg-white">
+				<div class="flex items-center justify-between border-b border-gray-200 p-4">
 					<h3 class="text-lg font-medium text-gray-900">Compare Alt Text</h3>
 					<button
 						onclick={() => (showComparison = false)}
-						class="text-gray-400 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+						class="text-gray-400 hover:text-gray-600 focus:ring-2 focus:ring-blue-500 focus:outline-none"
 						aria-label="Close comparison"
 					>
 						<svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+							<path
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								stroke-width="2"
+								d="M6 18L18 6M6 6l12 12"
+							/>
 						</svg>
 					</button>
 				</div>
-				<div class="p-4 overflow-y-auto">
-					<div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+				<div class="overflow-y-auto p-4">
+					<div class="grid grid-cols-1 gap-4 md:grid-cols-2">
 						<div>
-							<h4 class="font-medium text-gray-900 mb-2">Current Alt Text</h4>
-							<div class="p-3 bg-blue-50 border border-blue-200 rounded-md">
+							<h4 class="mb-2 font-medium text-gray-900">Current Alt Text</h4>
+							<div class="rounded-md border border-blue-200 bg-blue-50 p-3">
 								<p class="text-sm text-gray-800">{generatedAltText}</p>
 								<div class="mt-2 text-xs text-gray-600">
 									Characters: {generatedAltText.length}
@@ -586,8 +640,8 @@
 							</div>
 						</div>
 						<div>
-							<h4 class="font-medium text-gray-900 mb-2">Previous Version</h4>
-							<div class="p-3 bg-gray-50 border border-gray-200 rounded-md">
+							<h4 class="mb-2 font-medium text-gray-900">Previous Version</h4>
+							<div class="rounded-md border border-gray-200 bg-gray-50 p-3">
 								<p class="text-sm text-gray-800">{comparisonText}</p>
 								<div class="mt-2 text-xs text-gray-600">
 									Characters: {comparisonText.length}
@@ -598,7 +652,7 @@
 					<div class="mt-4 flex justify-end gap-2">
 						<button
 							onclick={() => (showComparison = false)}
-							class="px-4 py-2 text-sm text-gray-600 hover:text-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+							class="px-4 py-2 text-sm text-gray-600 transition-colors hover:text-gray-800 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
 						>
 							Close
 						</button>
@@ -608,7 +662,7 @@
 								showComparison = false;
 								announceMessage = 'Switched to previous version';
 							}}
-							class="px-4 py-2 bg-blue-600 text-white text-sm rounded-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+							class="rounded-md bg-blue-600 px-4 py-2 text-sm text-white transition-colors hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 						>
 							Use Previous Version
 						</button>
@@ -842,11 +896,11 @@
 			>
 				{#if history.length > 0}
 					<div class="mt-3 space-y-2">
-						<div class="flex justify-between items-center mb-3">
+						<div class="mb-3 flex items-center justify-between">
 							<span class="text-sm text-gray-600">Recent generations</span>
 							<button
 								onclick={clearHistory}
-								class="text-xs text-red-600 hover:text-red-800 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+								class="text-xs text-red-600 transition-colors hover:text-red-800 focus:ring-2 focus:ring-red-500 focus:ring-offset-2 focus:outline-none"
 								aria-label="Clear all history"
 							>
 								Clear all
@@ -855,8 +909,8 @@
 						{#each history as item (item.id)}
 							<div class="rounded-md border border-gray-200 bg-white p-3">
 								<div class="flex items-start justify-between gap-2">
-									<div class="flex-1 min-w-0">
-										<p class="text-sm text-gray-800 line-clamp-2">{item.altText}</p>
+									<div class="min-w-0 flex-1">
+										<p class="line-clamp-2 text-sm text-gray-800">{item.altText}</p>
 										<div class="mt-1 flex items-center gap-2 text-xs text-gray-500">
 											<span>{new Date(item.timestamp).toLocaleDateString()}</span>
 											<span>•</span>
@@ -870,14 +924,14 @@
 									<div class="flex gap-1">
 										<button
 											onclick={() => loadFromHistory(item)}
-											class="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 hover:bg-blue-200 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+											class="rounded bg-blue-100 px-2 py-1 text-xs text-blue-700 transition-colors hover:bg-blue-200 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none"
 											aria-label="Load this alt text"
 										>
 											Load
 										</button>
 										<button
 											onclick={() => compareWithCurrent(item.altText)}
-											class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+											class="rounded bg-gray-100 px-2 py-1 text-xs text-gray-700 transition-colors hover:bg-gray-200 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 focus:outline-none"
 											aria-label="Compare with current"
 										>
 											Compare
