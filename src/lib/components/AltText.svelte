@@ -23,6 +23,9 @@
 		const file = event.target.files[0];
 		if (file && file.type.startsWith('image/')) {
 			convertToBase64(file);
+			// Reset history when new image is uploaded
+			history.length = 0;
+			generatedAltText = '';
 			announceMessage = `Image ${file.name} uploaded successfully`;
 		} else if (file) {
 			announceMessage = 'Please select a valid image file';
@@ -37,6 +40,9 @@
 		const file = event.dataTransfer.files[0];
 		if (file && file.type.startsWith('image/')) {
 			convertToBase64(file);
+			// Reset history when new image is uploaded
+			history.length = 0;
+			generatedAltText = '';
 			announceMessage = `Image ${file.name} uploaded via drag and drop`;
 		} else if (file) {
 			announceMessage = 'Please drop a valid image file';
@@ -75,6 +81,14 @@
 	const sanitizedUrl = $derived(urlInput ? sanitizeUrl(urlInput) : '');
 	const isValidUrl = $derived(urlInput && sanitizedUrl);
 	const hasUrlError = $derived(urlInput && !sanitizedUrl);
+
+	// Reset history when URL changes to a valid URL
+	$effect(() => {
+		if (isValidUrl && urlInput) {
+			history.length = 0;
+			generatedAltText = '';
+		}
+	});
 
 	// Check if we can submit
 	const canSubmit = $derived((mode === 'image' && imageData) || (mode === 'url' && isValidUrl));
