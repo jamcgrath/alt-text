@@ -1,9 +1,11 @@
 // src/routes/api/alt-text/+server.js
 import { json } from '@sveltejs/kit';
-import OpenAI from 'openai';
-import { OPENAI_API_KEY } from '$env/static/private';
+import Anthropic from '@anthropic-ai/sdk';
+import { ANTHROPIC_API_KEY } from '$env/static/private';
 
-const openai = new OpenAI({ apiKey: OPENAI_API_KEY });
+const anthropic = new Anthropic({
+	apiKey: ANTHROPIC_API_KEY
+});
 
 export async function POST({ request }) {
 	try {
@@ -36,55 +38,95 @@ export async function POST({ request }) {
 			return json({ error: 'Invalid image data format' }, { status: 400 });
 		}
 
-		// Call out to OpenAI
-		const altText = await generateAltTextWithOpenAI({ data, context, previousAltText });
+		// Generate alt text with Claude
+		const altText = await generateAltTextWithClaude({ type, data, context, previousAltText });
 		return json({ altText, success: true });
+
 	} catch (error) {
 		console.error('Alt text generation error:', error);
 
 		if (error.status === 401) {
-			return json({ error: 'Invalid API key' }, { status: 500 });
+			return json({ error: 'Invalid Anthropic API key' }, { status: 500 });
 		} else if (error.status === 429) {
 			return json({ error: 'Rate limit exceeded. Please try again later.' }, { status: 429 });
 		} else if (error.status === 400) {
-			return json({ error: 'Invalid request to OpenAI' }, { status: 400 });
+			return json({ error: 'Invalid request to Anthropic' }, { status: 400 });
 		}
 
 		return json({ error: 'Failed to generate alt text' }, { status: 500 });
 	}
 }
 
-async function generateAltTextWithOpenAI({ data, context, previousAltText }) {
-	// 1. Build your instruction prompt (force a single-line answer)
-	const promptParts = [
-		'Generate a single-line alt text under 125 characters,',
-		'avoiding "image of"/"picture of", focusing on essential information.'
-	];
-	if (context) promptParts.push(`Context: ${context}.`);
-	if (previousAltText) promptParts.push(`Previous: "${previousAltText}". Improve it.`);
-	promptParts.push('Return only the alt text.');
-	const prompt = promptParts.join(' ');
+async function generateAltTextWithClaude({ type, data, context, previousAltText }) {
+	// Build the prompt
+	let prompt = 'Generate concise, descriptive alt text for this image. ';
+	prompt += 'Follow WCAG guidelines: be under 125 characters, avoid starting with "image of" or "picture of", focus on essential information that conveys the purpose and meaning of the image. ';
+	prompt += 'Be specific and descriptive but concise. ';
+	
+	if (context) {
+		prompt += `Additional context: ${context}. `;
+	}
+	
+	if (previousAltText) {
+		prompt += `Previous version: "${previousAltText}". Please improve this or provide a better alternative. `;
+	}
+	
+	prompt += 'Return only the alt text, no additional explanation.';
 
-	// 2. Vision-style input payload
-	const input = [
+	// Prepare the content array
+	const content = [
 		{
-			role: 'user',
-			content: [
-				{ type: 'input_text', text: prompt },
-				{ type: 'input_image', image_url: data }
-			]
+			type: "text",
+			text: prompt
 		}
 	];
 
-	// 3. Call the Responses API without `stop`
-	const response = await openai.responses.create({
-		model: 'o4-mini-2025-04-16',
-		input,
-		reasoning: { effort: 'high' },
-		max_output_tokens: 100
+	// Add image based on type
+	if (type === 'image') {
+		// Extract the base64 data and media type from data URL
+		const [header, base64Data] = data.split(',');
+		const mediaType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
+		
+		content.push({
+			type: "image",
+			source: {
+				type: "base64",
+				media_type: mediaType,
+				data: base64Data
+			}
+		});
+	} else if (type === 'url') {
+		// For URLs, we need to fetch the image and convert to base64
+		try {
+			const response = await fetch(data);
+			const arrayBuffer = await response.arrayBuffer();
+			const base64Data = Buffer.from(arrayBuffer).toString('base64');
+			const contentType = response.headers.get('content-type') || 'image/jpeg';
+			
+			content.push({
+				type: "image",
+				source: {
+					type: "base64",
+					media_type: contentType,
+					data: base64Data
+				}
+			});
+		} catch (error) {
+			throw new Error('Failed to fetch image from URL');
+		}
+	}
+
+	// Call Claude API
+	const response = await anthropic.messages.create({
+		model: "claude-3-5-sonnet-20241022",
+		max_tokens: 150,
+		messages: [
+			{
+				role: "user",
+				content: content
+			}
+		]
 	});
 
-	// 4. Return the trimmed content
-	const message = response.choices?.[0]?.message?.content;
-	return message?.trim() ?? '';
+	return response.content[0].text.trim();
 }
