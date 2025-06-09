@@ -155,12 +155,21 @@
 		}
 	});
 
+	// Character count analysis
+	const charCount = $derived(() => {
+		if (!generatedAltText) return 0;
+		return generatedAltText.trim().length;
+	});
+
+	const isOptimalLength = $derived(() => {
+		return charCount >= 20 && charCount <= 125;
+	});
+
 	// Alt text quality analysis
 	const altTextAnalysis = $derived(() => {
 		if (!generatedAltText) return null;
 
 		const text = generatedAltText.trim();
-		const charCount = text.length;
 		const issues = [];
 		let score = 100;
 
@@ -220,8 +229,6 @@
 		score = Math.max(0, score);
 
 		return {
-			charCount,
-			isOptimalLength: charCount >= 20 && charCount <= 125,
 			issues,
 			score,
 			quality:
@@ -712,19 +719,19 @@
 							<span class="text-gray-600">
 								Characters:
 								<span
-									class={altTextAnalysis.charCount > 125
+									class={charCount > 125
 										? 'font-medium text-red-600'
-										: altTextAnalysis.isOptimalLength
+										: isOptimalLength
 											? 'text-green-600'
 											: 'text-gray-800'}
 								>
-									{altTextAnalysis.charCount}
+									{charCount}
 								</span>
 								<span class="text-gray-400">/ 125</span>
 							</span>
-							{#if altTextAnalysis.charCount > 125}
+							{#if charCount > 125}
 								<span class="rounded bg-red-100 px-2 py-1 text-xs text-red-700">Too long</span>
-							{:else if altTextAnalysis.isOptimalLength}
+							{:else if isOptimalLength}
 								<span class="rounded bg-green-100 px-2 py-1 text-xs text-green-700"
 									>Good length</span
 								>
