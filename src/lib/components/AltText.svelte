@@ -74,12 +74,9 @@
 	const canSubmit = $derived((mode === 'image' && imageData) || (mode === 'url' && isValidUrl));
 
 	// Determine button text based on state
-	const buttonText = $derived(() => {
-		if (!generatedAltText) {
-			return 'Generate Alt Text';
-		}
-		return 'Regenerate Alt Text';
-	});
+	const buttonText = $derived(
+		!generatedAltText ? 'Generate Alt Text' : 'Regenerate Alt Text'
+	);
 
 	// Handle submit
 	function handleSubmit() {
