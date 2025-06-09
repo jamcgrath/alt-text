@@ -129,11 +129,6 @@
 		}
 	}
 
-	// Handle textarea auto-resize
-	function autoResize(textarea) {
-		textarea.style.height = 'auto';
-		textarea.style.height = textarea.scrollHeight + 'px';
-	}
 
 	// Handle click to edit
 	function handleTextareaClick() {
@@ -156,10 +151,6 @@
 		}
 	}
 
-	// Handle textarea input for auto-resize
-	function handleTextareaInput(event) {
-		autoResize(event.target);
-	}
 </script>
 
 <div class="mx-auto max-w-2xl p-5">
@@ -409,18 +400,18 @@
 
 			<div class="relative">
 				<label for="alt-text-result" class="sr-only">Generated alt text (click to edit)</label>
-				<textarea
-					bind:value={generatedAltText}
-					readonly={!isEditing}
+				<div
+					bind:textContent={generatedAltText}
+					contenteditable={isEditing}
 					onclick={handleTextareaClick}
-					oninput={handleTextareaInput}
 					id="alt-text-result"
-					class="w-full resize-none rounded-md border border-gray-300 p-3 transition-all duration-200 {isEditing
+					class="w-full rounded-md border border-gray-300 p-3 transition-all duration-200 min-h-[60px] {isEditing
 						? 'bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'
 						: 'cursor-pointer bg-gray-100 hover:bg-gray-200'}"
-					style="min-height: 60px; overflow: hidden;"
 					aria-describedby="edit-instructions"
-				></textarea>
+					role="textbox"
+					aria-multiline="true"
+				></div>
 
 				{#if !isEditing}
 					<div
