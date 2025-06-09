@@ -43,12 +43,15 @@ cd alt-text-generator
 pnpm install
 ```
 
-3. Create environment variables file:
+3. Set up environment variables:
 ```bash
-echo "ANTHROPIC_API_KEY=your_anthropic_api_key_here" > .env
+cp .env.example .env
 ```
 
-Replace `your_anthropic_api_key_here` with your actual Anthropic API key.
+4. Add your Anthropic API key to `.env`:
+```bash
+ANTHROPIC_API_KEY=your_actual_anthropic_api_key_here
+```
 
 ### Development
 
