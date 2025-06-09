@@ -559,7 +559,7 @@
 					</div>
 
 					<!-- Issues and Suggestions -->
-					{#if altTextAnalysis.issues.length > 0}
+					{#if altTextAnalysis.issues && altTextAnalysis.issues.length > 0}
 						<div class="bg-yellow-50 border border-yellow-200 rounded-md p-3">
 							<h4 class="text-sm font-medium text-yellow-800 mb-2">Suggestions for improvement:</h4>
 							<ul class="text-sm text-yellow-700 space-y-1">
