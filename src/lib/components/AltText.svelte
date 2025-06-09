@@ -6,6 +6,9 @@
   let contextExpanded = $state(false);
   let contextText = $state('');
   let wcagExpanded = $state(false);
+  let generatedAltText = $state('');
+  let isEditing = $state(false);
+  let copySuccess = $state(false);
 
   // Handle file upload
   function handleFileSelect(event) {
