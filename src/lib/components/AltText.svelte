@@ -601,7 +601,7 @@
 							<div class="rounded-md border border-blue-200 bg-blue-50 p-3">
 								<p class="text-sm text-gray-800">{generatedAltText}</p>
 								<div class="mt-2 text-xs text-gray-600">
-									Characters: {generatedAltText.length}
+									Characters: {altTextAnalysis?.textLength || 0}
 								</div>
 							</div>
 						</div>
