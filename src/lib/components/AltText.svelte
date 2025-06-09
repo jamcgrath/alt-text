@@ -687,6 +687,8 @@
 					bind:textContent={generatedAltText}
 					contenteditable="true"
 					onclick={handleTextareaClick}
+					oninput={(e) => { generatedAltText = e.target.textContent; }}
+					onblur={(e) => { generatedAltText = e.target.textContent; }}
 					id="alt-text-result"
 					class="min-h-[60px] w-full rounded-md border border-gray-300 p-3 transition-all duration-200 {isEditing
 						? 'bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'
