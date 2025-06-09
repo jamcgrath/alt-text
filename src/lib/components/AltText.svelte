@@ -230,6 +230,7 @@
 		score = Math.max(0, score);
 
 		return {
+			textLength,
 			issues,
 			score,
 			quality:
@@ -720,19 +721,19 @@
 							<span class="text-gray-600">
 								Characters:
 								<span
-									class={charCount() > 125
+									class={altTextAnalysis.textLength > 125
 										? 'font-medium text-red-600'
-										: isOptimalLength()
+										: altTextAnalysis.textLength >= 20 && altTextAnalysis.textLength <= 125
 											? 'text-green-600'
 											: 'text-gray-800'}
 								>
-									{charCount()}
+									{altTextAnalysis.textLength}
 								</span>
 								<span class="text-gray-400">/ 125</span>
 							</span>
-							{#if charCount() > 125}
+							{#if altTextAnalysis.textLength > 125}
 								<span class="rounded bg-red-100 px-2 py-1 text-xs text-red-700">Too long</span>
-							{:else if isOptimalLength()}
+							{:else if altTextAnalysis.textLength >= 20 && altTextAnalysis.textLength <= 125}
 								<span class="rounded bg-green-100 px-2 py-1 text-xs text-green-700"
 									>Good length</span
 								>
