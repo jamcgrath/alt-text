@@ -115,7 +115,12 @@
 	function clearHistory() {
 		if (typeof window === 'undefined') return;
 		
+		// Clear localStorage
 		localStorage.removeItem(historyKey);
+		
+		// Clear mock data
+		history.length = 0;
+		
 		announceMessage = 'History cleared';
 	}
 
