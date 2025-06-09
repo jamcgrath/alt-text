@@ -402,7 +402,7 @@
 				<label for="alt-text-result" class="sr-only">Generated alt text (click to edit)</label>
 				<div
 					bind:textContent={generatedAltText}
-					contenteditable={isEditing}
+					contenteditable="true"
 					onclick={handleTextareaClick}
 					id="alt-text-result"
 					class="w-full rounded-md border border-gray-300 p-3 transition-all duration-200 min-h-[60px] {isEditing
