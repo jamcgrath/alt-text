@@ -196,25 +196,33 @@
     </button>
   </div>
 
-  <!-- WCAG Criteria Section -->
-  <div class="mt-6 border border-gray-200 rounded-lg">
+  <!-- Visual Separator -->
+  <div class="mt-8 border-t border-gray-200"></div>
+
+  <!-- WCAG Guidelines Help -->
+  <div class="mt-6 flex justify-center">
     <button 
       onclick={() => wcagExpanded = !wcagExpanded}
-      class="w-full px-4 py-3 text-left flex items-center justify-between hover:bg-gray-50 transition-colors"
+      class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+      title="View WCAG Alt Text Guidelines"
     >
-      <span class="font-medium text-gray-700">WCAG Alt Text Guidelines</span>
       <svg 
-        class="w-5 h-5 text-gray-500 transition-transform duration-200 {wcagExpanded ? 'rotate-180' : ''}"
+        class="w-4 h-4" 
         fill="none" 
         stroke="currentColor" 
         viewBox="0 0 24 24"
       >
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
       </svg>
+      WCAG Alt Text Guidelines
     </button>
-    
-    {#if wcagExpanded}
-      <div class="px-4 pb-4 border-t border-gray-200">
+  </div>
+
+  {#if wcagExpanded}
+    <div class="mt-4 border border-gray-200 rounded-lg">
+      <div class="px-4 py-4">
         <div class="mt-3 space-y-4 text-sm">
           <div>
             <h4 class="font-semibold text-gray-800 mb-2">Key WCAG 2.1 Criteria for Alt Text:</h4>
@@ -250,6 +258,6 @@
           </div>
         </div>
       </div>
-    {/if}
-  </div>
+    </div>
+  {/if}
 </div>
