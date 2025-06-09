@@ -833,7 +833,10 @@
 												src={item.url}
 												alt="Thumbnail"
 												class="h-12 w-12 rounded-md border border-gray-200 object-cover"
-												onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';"
+												onerror={(e) => {
+													e.target.style.display = 'none';
+													e.target.nextElementSibling.style.display = 'flex';
+												}}
 											/>
 											<div class="hidden h-12 w-12 items-center justify-center rounded-md border border-gray-200 bg-gray-100">
 												<svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
