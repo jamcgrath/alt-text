@@ -23,8 +23,6 @@
 		const file = event.target.files[0];
 		if (file && file.type.startsWith('image/')) {
 			convertToBase64(file);
-			// Reset history when new image is uploaded
-			history.length = 0;
 			generatedAltText = '';
 			announceMessage = `Image ${file.name} uploaded successfully`;
 		} else if (file) {
@@ -40,8 +38,6 @@
 		const file = event.dataTransfer.files[0];
 		if (file && file.type.startsWith('image/')) {
 			convertToBase64(file);
-			// Reset history when new image is uploaded
-			history.length = 0;
 			generatedAltText = '';
 			announceMessage = `Image ${file.name} uploaded via drag and drop`;
 		} else if (file) {
@@ -113,6 +109,9 @@
 		const newHistory = [historyItem, ...existingHistory.slice(0, maxHistoryItems - 1)];
 
 		localStorage.setItem(historyKey, JSON.stringify(newHistory));
+		
+		// Update the reactive history array
+		history = newHistory;
 	}
 
 	function getHistory() {
@@ -132,8 +131,8 @@
 		// Clear localStorage
 		localStorage.removeItem(historyKey);
 
-		// Clear mock data
-		history.length = 0;
+		// Clear reactive history array
+		history = [];
 
 		announceMessage = 'History cleared';
 	}
@@ -149,54 +148,15 @@
 		showComparison = true;
 	}
 
-	// Get history for display - mock data for now
-	const history = $state([
-		{
-			id: 1703123456789,
-			altText:
-				'A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.',
-			timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 minutes ago
-			inputType: 'image',
-			context: 'Focus on the upward trend rather than specific numbers',
-			hasImage: true
-		},
-		{
-			id: 1703123456788,
-			altText:
-				'A professional headshot of a smiling woman in business attire against a neutral background.',
-			timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-			inputType: 'url',
-			context: '',
-			url: 'https://example.com/headshot.jpg'
-		},
-		{
-			id: 1703123456787,
-			altText:
-				'Screenshot of a mobile app interface showing a login form with username and password fields.',
-			timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-			inputType: 'image',
-			context: 'This screenshot shows the final result users should expect',
-			hasImage: true
-		},
-		{
-			id: 1703123456786,
-			altText:
-				'Infographic displaying climate change statistics with rising temperature graphs and melting ice imagery.',
-			timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2).toISOString(), // 2 days ago
-			inputType: 'url',
-			context: '',
-			url: 'https://example.com/climate-infographic.png'
-		},
-		{
-			id: 1703123456785,
-			altText:
-				'A group photo of diverse team members celebrating in an office setting with confetti and balloons.',
-			timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24 * 3).toISOString(), // 3 days ago
-			inputType: 'image',
-			context: 'Emphasize the celebratory and diverse nature of the team',
-			hasImage: true
+	// Get history for display
+	let history = $state([]);
+
+	// Load history on component mount
+	$effect(() => {
+		if (typeof window !== 'undefined') {
+			history = getHistory();
 		}
-	]);
+	});
 
 	// Alt text quality analysis
 	const altTextAnalysis = $derived(() => {
