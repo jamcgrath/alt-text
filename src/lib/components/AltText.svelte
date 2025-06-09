@@ -178,7 +178,7 @@
           rows="4"
         ></textarea>
         <p class="text-sm text-gray-500 mt-2">
-          Example: "This image will be used in a medical blog post about diabetes management for elderly patients."
+          Example: "This chart shows quarterly sales data - focus on the upward trend rather than specific numbers" or "This decorative image sets the mood but doesn't convey essential information."
         </p>
       </div>
     {/if}
