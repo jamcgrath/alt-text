@@ -76,6 +76,41 @@
 				: { type: 'url', data: sanitizedUrl, context: contextText };
 
 		console.log('Submitting:', payload);
+
+		// Mock response for demo
+		setTimeout(() => {
+			generatedAltText = "A colorful bar chart showing quarterly sales data with an upward trend from Q1 to Q4, indicating steady business growth throughout the year.";
+			isEditing = false;
+		}, 1000);
+	}
+
+	// Handle textarea auto-resize
+	function autoResize(textarea) {
+		textarea.style.height = 'auto';
+		textarea.style.height = textarea.scrollHeight + 'px';
+	}
+
+	// Handle click to edit
+	function handleTextareaClick() {
+		if (!isEditing) {
+			isEditing = true;
+		}
+	}
+
+	// Handle copy to clipboard
+	async function copyToClipboard() {
+		try {
+			await navigator.clipboard.writeText(generatedAltText);
+			copySuccess = true;
+			setTimeout(() => copySuccess = false, 2000);
+		} catch (err) {
+			console.error('Failed to copy text: ', err);
+		}
+	}
+
+	// Handle textarea input for auto-resize
+	function handleTextareaInput(event) {
+		autoResize(event.target);
 	}
 </script>
 
@@ -225,6 +260,62 @@
 			Generate Alt Text
 		</button>
 	</div>
+
+	<!-- Generated Alt Text Display -->
+	{#if generatedAltText}
+		<div class="mt-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+			<div class="mb-3 flex items-center justify-between">
+				<h3 class="font-medium text-gray-800">Generated Alt Text</h3>
+				<button
+					onclick={copyToClipboard}
+					class="inline-flex items-center gap-1 rounded-md border border-gray-300 bg-white px-3 py-1 text-sm transition-colors hover:bg-gray-50"
+					title="Copy to clipboard"
+				>
+					{#if copySuccess}
+						<svg class="h-4 w-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+						</svg>
+						Copied!
+					{:else}
+						<svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+						</svg>
+						Copy
+					{/if}
+				</button>
+			</div>
+			
+			<div class="relative">
+				<textarea 
+					bind:value={generatedAltText}
+					readonly={!isEditing}
+					onclick={handleTextareaClick}
+					oninput={handleTextareaInput}
+					class="w-full resize-none rounded-md border border-gray-300 p-3 transition-all duration-200 {isEditing ? 'bg-white focus:border-blue-500 focus:outline-none' : 'cursor-pointer bg-gray-100 hover:bg-gray-200'}"
+					style="min-height: 60px; overflow: hidden;"
+				></textarea>
+				
+				{#if !isEditing}
+					<div class="pointer-events-none absolute inset-0 flex items-center justify-center opacity-0 transition-opacity hover:opacity-100">
+						<div class="rounded bg-black bg-opacity-75 px-2 py-1 text-xs text-white">
+							Click to edit
+						</div>
+					</div>
+				{/if}
+			</div>
+			
+			{#if isEditing}
+				<div class="mt-2 flex justify-end gap-2">
+					<button 
+						onclick={() => isEditing = false}
+						class="px-3 py-1 text-sm text-gray-600 transition-colors hover:text-gray-800"
+					>
+						Done
+					</button>
+				</div>
+			{/if}
+		</div>
+	{/if}
 
 	<!-- Visual Separator -->
 	<div class="mt-8 border-t border-gray-200"></div>
