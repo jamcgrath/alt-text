@@ -8,7 +8,10 @@ import { json } from '@sveltejs/kit';
 import Anthropic from '@anthropic-ai/sdk';
 import { ANTHROPIC_API_KEY } from '$env/static/private';
 
-/** @type {Anthropic} Anthropic client instance */
+/**
+ * Anthropic client instance for Claude API
+ * @type {Anthropic}
+ */
 const anthropic = new Anthropic({
 	apiKey: ANTHROPIC_API_KEY
 });
@@ -33,7 +36,9 @@ const anthropic = new Anthropic({
  */
 
 /**
- * POST endpoint for generating alt text from images
+ * POST endpoint for generating alt text from images or URLs.
+ * Validates input, fetches image if needed, and calls Claude API.
+ *
  * @param {Object} params - Request parameters
  * @param {Request} params.request - The incoming request
  * @returns {Promise<Response>} JSON response with alt text or error
@@ -72,7 +77,6 @@ export async function POST({ request }) {
 
 		const altText = await generateAltTextWithClaude({ type, data, context, previousAltText });
 		return json({ altText, success: true });
-
 	} catch (error) {
 		console.error('Alt text generation error:', error);
 
@@ -90,7 +94,9 @@ export async function POST({ request }) {
 }
 
 /**
- * Generate alt text using Anthropic's Claude AI
+ * Generate alt text using Anthropic's Claude AI.
+ * Builds a WCAG-compliant prompt and sends image data to Claude.
+ *
  * @param {Object} params - Generation parameters
  * @param {'image'|'url'} params.type - Type of input data
  * @param {string} params.data - Base64 image data or image URL
@@ -102,23 +108,24 @@ export async function POST({ request }) {
 async function generateAltTextWithClaude({ type, data, context, previousAltText }) {
 	// Build WCAG-compliant prompt
 	let prompt = 'Generate concise, descriptive alt text for this image. ';
-	prompt += 'Follow WCAG guidelines: be under 125 characters, avoid starting with "image of" or "picture of", focus on essential information that conveys the purpose and meaning of the image. ';
+	prompt +=
+		'Follow WCAG guidelines: be under 125 characters, avoid starting with "image of" or "picture of", focus on essential information that conveys the purpose and meaning of the image. ';
 	prompt += 'Be specific and descriptive but concise. ';
-	
+
 	if (context) {
 		prompt += `Additional context: ${context}. `;
 	}
-	
+
 	if (previousAltText) {
 		prompt += `Previous version: "${previousAltText}". Please improve this or provide a better alternative. `;
 	}
-	
+
 	prompt += 'Return only the alt text, no additional explanation.';
 
 	/** @type {Array<Object>} Content array for Claude API */
 	const content = [
 		{
-			type: "text",
+			type: 'text',
 			text: prompt
 		}
 	];
@@ -127,11 +134,11 @@ async function generateAltTextWithClaude({ type, data, context, previousAltText 
 	if (type === 'image') {
 		const [header, base64Data] = data.split(',');
 		const mediaType = header.match(/data:([^;]+)/)?.[1] || 'image/jpeg';
-		
+
 		content.push({
-			type: "image",
+			type: 'image',
 			source: {
-				type: "base64",
+				type: 'base64',
 				media_type: mediaType,
 				data: base64Data
 			}
@@ -142,11 +149,11 @@ async function generateAltTextWithClaude({ type, data, context, previousAltText 
 			const arrayBuffer = await response.arrayBuffer();
 			const base64Data = Buffer.from(arrayBuffer).toString('base64');
 			const contentType = response.headers.get('content-type') || 'image/jpeg';
-			
+
 			content.push({
-				type: "image",
+				type: 'image',
 				source: {
-					type: "base64",
+					type: 'base64',
 					media_type: contentType,
 					data: base64Data
 				}
@@ -158,11 +165,11 @@ async function generateAltTextWithClaude({ type, data, context, previousAltText 
 
 	// Call Claude API
 	const response = await anthropic.messages.create({
-		model: "claude-3-5-sonnet-20241022",
+		model: 'claude-3-5-sonnet-20241022',
 		max_tokens: 150,
 		messages: [
 			{
-				role: "user",
+				role: 'user',
 				content: content
 			}
 		]

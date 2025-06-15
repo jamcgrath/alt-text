@@ -6,52 +6,52 @@
 	 */
 
 	// ===== STATE VARIABLES =====
-	
+
 	/** @type {'image'|'url'} Current input mode */
 	let mode = $state('image');
-	
+
 	/** @type {string|null} Base64 encoded image data */
 	let imageData = $state(null);
-	
+
 	/** @type {string} URL input value */
 	let urlInput = $state('');
-	
+
 	/** @type {boolean} Drag and drop state */
 	let isDragOver = $state(false);
-	
+
 	/** @type {boolean} Context section expanded state */
 	let contextExpanded = $state(false);
-	
+
 	/** @type {string} Additional context for alt text generation */
 	let contextText = $state('');
-	
+
 	/** @type {boolean} WCAG guidelines section expanded state */
 	let wcagExpanded = $state(false);
-	
+
 	/** @type {string} Generated alt text content */
 	let generatedAltText = $state('');
-	
+
 	/** @type {boolean} Alt text editing mode */
 	let isEditing = $state(false);
-	
+
 	/** @type {boolean} Copy to clipboard success state */
 	let copySuccess = $state(false);
-	
+
 	/** @type {string} Screen reader announcement message */
 	let announceMessage = $state('');
-	
+
 	/** @type {string} Form submission error message */
 	let submitError = $state('');
-	
+
 	/** @type {boolean} API request loading state */
 	let isLoading = $state(false);
-	
+
 	/** @type {boolean} History section expanded state */
 	let historyExpanded = $state(true);
-	
+
 	/** @type {boolean} Comparison modal visibility */
 	let showComparison = $state(false);
-	
+
 	/** @type {string} Alt text for comparison */
 	let comparisonText = $state('');
 
@@ -80,14 +80,7 @@
 		event.preventDefault();
 		isDragOver = false;
 
-		const file = event.dataTransfer.files[0];
-		if (file && file.type.startsWith('image/')) {
-			convertToBase64(file);
-			generatedAltText = '';
-			announceMessage = `Image ${file.name} uploaded via drag and drop`;
-		} else if (file) {
-			announceMessage = 'Please drop a valid image file';
-		}
+		handleFileSelect(event);
 	}
 
 	/**
@@ -153,6 +146,11 @@
 	const historyKey = 'altTextHistory';
 	const maxHistoryItems = 20;
 
+	/**
+	 * Save a generated alt text and its input data to local history (localStorage).
+	 * @param {string} altText - The alt text to save.
+	 * @param {Object} inputData - Additional input data (image or URL info).
+	 */
 	function saveToHistory(altText, inputData) {
 		if (typeof window === 'undefined') return;
 
@@ -169,11 +167,15 @@
 		const newHistory = [historyItem, ...existingHistory.slice(0, maxHistoryItems - 1)];
 
 		localStorage.setItem(historyKey, JSON.stringify(newHistory));
-		
+
 		// Update the reactive history array
 		history = newHistory;
 	}
 
+	/**
+	 * Retrieve the alt text generation history from localStorage.
+	 * @returns {Array} Array of history items.
+	 */
 	function getHistory() {
 		if (typeof window === 'undefined') return [];
 
@@ -185,6 +187,9 @@
 		}
 	}
 
+	/**
+	 * Clear the alt text generation history from localStorage and state.
+	 */
 	function clearHistory() {
 		if (typeof window === 'undefined') return;
 
@@ -197,12 +202,20 @@
 		announceMessage = 'History cleared';
 	}
 
+	/**
+	 * Load a previous alt text from history into the editor.
+	 * @param {Object} item - The history item to load.
+	 */
 	function loadFromHistory(item) {
 		generatedAltText = item.altText;
 		isEditing = false;
 		announceMessage = `Loaded alt text from ${new Date(item.timestamp).toLocaleDateString()}`;
 	}
 
+	/**
+	 * Show a modal to compare a previous alt text with the current one.
+	 * @param {string} historyText - The previous alt text to compare.
+	 */
 	function compareWithCurrent(historyText) {
 		comparisonText = historyText;
 		showComparison = true;
@@ -218,18 +231,28 @@
 		}
 	});
 
-	// Character count - simple and independent
+	/**
+	 * Character count of the generated alt text.
+	 * @type {import('svelte/store').Readable<number>}
+	 */
 	const charCount = $derived(() => {
 		if (!generatedAltText) return 0;
 		return generatedAltText.trim().length;
 	});
 
+	/**
+	 * Whether the generated alt text is of optimal length (20-125 chars).
+	 * @type {import('svelte/store').Readable<boolean>}
+	 */
 	const isOptimalLength = $derived(() => {
 		const count = charCount();
 		return count >= 20 && count <= 125;
 	});
 
-	// Simple quality feedback based on common issues
+	/**
+	 * Provides quality feedback and suggestions for the generated alt text.
+	 * @type {import('svelte/store').Readable<{issues: string[]}|null>}
+	 */
 	const qualityFeedback = $derived(() => {
 		if (!generatedAltText) return null;
 
@@ -237,7 +260,13 @@
 		const issues = [];
 
 		// Check for redundant phrases
-		const redundantPhrases = ['image of', 'picture of', 'photo of', 'graphic of', 'illustration of'];
+		const redundantPhrases = [
+			'image of',
+			'picture of',
+			'photo of',
+			'graphic of',
+			'illustration of'
+		];
 		const lowerText = text.toLowerCase();
 		for (const phrase of redundantPhrases) {
 			if (lowerText.startsWith(phrase)) {
@@ -256,14 +285,22 @@
 		}
 
 		// Check if it's just a filename or URL
-		if (text.includes('.jpg') || text.includes('.png') || text.includes('.gif') || text.includes('http')) {
+		if (
+			text.includes('.jpg') ||
+			text.includes('.png') ||
+			text.includes('.gif') ||
+			text.includes('http')
+		) {
 			issues.push('Appears to contain filename or URL. Describe the image content instead.');
 		}
 
 		return { issues };
 	});
 
-	// Determine button text based on state
+	/**
+	 * The button text for the generate/regenerate button, based on state.
+	 * @type {import('svelte/store').Readable<string>}
+	 */
 	const buttonText = $derived(
 		isLoading ? 'Generating...' : !generatedAltText ? 'Generate Alt Text' : 'Regenerate Alt Text'
 	);
@@ -293,19 +330,20 @@
 
 		try {
 			/** @type {Object} API request payload */
-			const payload = mode === 'image'
-				? {
-					type: 'image',
-					data: imageData,
-					context: contextText,
-					previousAltText: generatedAltText || null
-				}
-				: {
-					type: 'url',
-					data: sanitizedUrl,
-					context: contextText,
-					previousAltText: generatedAltText || null
-				};
+			const payload =
+				mode === 'image'
+					? {
+							type: 'image',
+							data: imageData,
+							context: contextText,
+							previousAltText: generatedAltText || null
+						}
+					: {
+							type: 'url',
+							data: sanitizedUrl,
+							context: contextText,
+							previousAltText: generatedAltText || null
+						};
 
 			const response = await fetch('/api/generate-alt-text', {
 				method: 'POST',
@@ -325,9 +363,10 @@
 			generatedAltText = result.altText;
 
 			// Save to history with appropriate input data
-			const inputData = mode === 'image'
-				? { hasImage: true, imageSize: imageData ? 'uploaded' : null, imageData: imageData }
-				: { url: sanitizedUrl };
+			const inputData =
+				mode === 'image'
+					? { hasImage: true, imageSize: imageData ? 'uploaded' : null, imageData: imageData }
+					: { url: sanitizedUrl };
 
 			saveToHistory(result.altText, inputData);
 
@@ -335,7 +374,6 @@
 			announceMessage = isRegeneration
 				? 'Alt text has been regenerated successfully'
 				: 'Alt text has been generated successfully';
-
 		} catch (error) {
 			console.error('Error generating alt text:', error);
 			submitError = error.message || 'Failed to generate alt text. Please try again.';
@@ -731,22 +769,17 @@
 
 			<div class="relative">
 				<label for="alt-text-result" class="sr-only">Generated alt text (click to edit)</label>
-				<div
-					bind:textContent={generatedAltText}
-					contenteditable="true"
-					onclick={handleTextareaClick}
-					oninput={(e) => { generatedAltText = e.target.textContent; }}
-					onblur={(e) => { generatedAltText = e.target.textContent; }}
+				<textarea
+					bind:value={generatedAltText}
 					id="alt-text-result"
 					class="min-h-[60px] w-full rounded-md border border-gray-300 p-3 transition-all duration-200 {isEditing
 						? 'bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none'
 						: 'cursor-pointer bg-gray-100 hover:bg-gray-200'}"
 					aria-describedby="edit-instructions"
-					role="textbox"
 					aria-multiline="true"
 					tabindex="0"
 					aria-label="Generated alt text, click to edit"
-				></div>
+				></textarea>
 
 				{#if !isEditing}
 					<div
@@ -793,11 +826,7 @@
 						<ul class="space-y-1 text-sm text-yellow-700">
 							{#each qualityFeedback.issues as issue}
 								<li class="flex items-start gap-2">
-									<svg
-										class="mt-0.5 h-4 w-4 flex-shrink-0"
-										fill="currentColor"
-										viewBox="0 0 20 20"
-									>
+									<svg class="mt-0.5 h-4 w-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
 										<path
 											fill-rule="evenodd"
 											d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
@@ -909,16 +938,40 @@
 													e.target.nextElementSibling.style.display = 'flex';
 												}}
 											/>
-											<div class="hidden h-12 w-12 items-center justify-center rounded-md border border-gray-200 bg-gray-100">
-												<svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-													<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m0 0l4-4a4 4 0 105.656-5.656l-4 4a4 4 0 01-5.656 0z" />
+											<div
+												class="hidden h-12 w-12 items-center justify-center rounded-md border border-gray-200 bg-gray-100"
+											>
+												<svg
+													class="h-6 w-6 text-gray-400"
+													fill="none"
+													stroke="currentColor"
+													viewBox="0 0 24 24"
+												>
+													<path
+														stroke-linecap="round"
+														stroke-linejoin="round"
+														stroke-width="2"
+														d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.102m0 0l4-4a4 4 0 105.656-5.656l-4 4a4 4 0 01-5.656 0z"
+													/>
 												</svg>
 											</div>
 										</div>
 									{:else}
-										<div class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-100">
-											<svg class="h-6 w-6 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+										<div
+											class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-md border border-gray-200 bg-gray-100"
+										>
+											<svg
+												class="h-6 w-6 text-gray-400"
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path
+													stroke-linecap="round"
+													stroke-linejoin="round"
+													stroke-width="2"
+													d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+												/>
 											</svg>
 										</div>
 									{/if}
@@ -1063,6 +1116,7 @@
 		display: -webkit-box;
 		-webkit-line-clamp: 2;
 		-webkit-box-orient: vertical;
+		line-clamp: 2;
 		overflow: hidden;
 	}
 </style>
